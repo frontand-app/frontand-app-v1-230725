@@ -12,6 +12,12 @@ import { Loader2, Play, DollarSign, Zap, Clock, CheckCircle } from "lucide-react
 import FormGenerator from "@/components/FormGenerator";
 import { useToast } from "@/hooks/use-toast";
 
+interface FormData {
+  text?: string;
+  num_clusters?: number;
+  similarity_threshold?: number;
+}
+
 // Sample flow data
 const sampleFlows = {
   "cluster-keywords": {
@@ -79,7 +85,7 @@ const FlowRunner = () => {
   const { id } = useParams();
   const { toast } = useToast();
   const [flow, setFlow] = useState(null);
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState<FormData>({});
   const [selectedModel, setSelectedModel] = useState("gpt-3.5-turbo");
   const [estimatedCost, setEstimatedCost] = useState(0);
   const [isRunning, setIsRunning] = useState(false);

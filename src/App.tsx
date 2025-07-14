@@ -9,7 +9,11 @@ import NotFound from "./pages/NotFound";
 import FlowLibrary from "./pages/FlowLibrary";
 import FlowRunner from "./pages/FlowRunner";
 import Dashboard from "./pages/Dashboard";
+import Auth from "./pages/Auth";
+import CreatorsDashboard from "./pages/CreatorsDashboard";
+import OAuthCallbackPage from "./pages/OAuthCallback";
 import Layout from "./components/Layout";
+import { AuthProvider } from "./components/auth/AuthProvider";
 
 const queryClient = new QueryClient();
 
@@ -19,15 +23,20 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/flows" element={<FlowLibrary />} />
-            <Route path="/flows/:id" element={<FlowRunner />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Layout>
+        <AuthProvider>
+          <Layout>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/flows" element={<FlowLibrary />} />
+              <Route path="/flows/:id" element={<FlowRunner />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/creators" element={<CreatorsDashboard />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/oauth/callback/:service" element={<OAuthCallbackPage />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Layout>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

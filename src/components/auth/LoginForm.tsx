@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, LogIn, Mail, Lock } from 'lucide-react';
-import { useAuth } from './AuthProvider';
+import { LogIn, Mail, Lock, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 interface LoginFormProps {
   onToggleMode: () => void;
@@ -14,27 +14,73 @@ interface LoginFormProps {
 export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const { signInWithEmail } = useAuth();
+
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setEmailError('Please enter a valid email address');
+      return false;
+    }
+    setEmailError('');
+    return true;
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setEmail(value);
+    if (emailError && value) {
+      validateEmail(value);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError(null);
+    setError('');
+    setSuccess('');
 
-    const { error } = await signInWithEmail(email, password);
-    
-    if (error) {
-      setError(error.message);
+    if (!validateEmail(email)) {
+      return;
     }
-    
-    setIsLoading(false);
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { error } = await signInWithEmail(email, password);
+      if (error) {
+        if (error.message?.includes('Invalid login credentials')) {
+          setError('Invalid email or password. Please check your credentials and try again.');
+        } else if (error.message?.includes('Email not confirmed')) {
+          setError('Please check your email and confirm your account before signing in.');
+        } else if (error.message?.includes('Too many requests')) {
+          setError('Too many login attempts. Please wait a moment and try again.');
+        } else {
+          setError(error.message || 'Failed to sign in. Please try again.');
+        }
+      } else {
+        setSuccess('Login successful! Welcome back.');
+        // The auth context will handle the redirect
+      }
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto shadow-lg border border-gray-200 bg-white">
-      <CardHeader className="text-center pb-6">
+    <Card className="w-full max-w-md mx-auto shadow-xl border-0 bg-white">
+      <CardHeader className="space-y-4 pb-6">
         <div className="w-12 h-12 bg-primary-500 rounded-full flex items-center justify-center mx-auto mb-4">
           <LogIn className="w-6 h-6 text-white" />
         </div>
@@ -42,7 +88,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
           Welcome back
         </CardTitle>
         <CardDescription className="text-gray-600">
-          Sign in to your CLOSED AI account
+          Sign in to your Front& account
         </CardDescription>
       </CardHeader>
       
@@ -59,11 +105,20 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
                 type="email"
                 placeholder="Enter your email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="pl-10 h-11 border-gray-300 focus:border-primary-500 focus:ring-primary-500"
+                onChange={handleEmailChange}
+                onBlur={() => email && validateEmail(email)}
+                className={`pl-10 h-11 border-gray-300 focus:border-primary-500 focus:ring-primary-500 ${
+                  emailError ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''
+                }`}
                 required
               />
             </div>
+            {emailError && (
+              <p className="text-sm text-red-600 flex items-center gap-1">
+                <AlertCircle className="h-4 w-4" />
+                {emailError}
+              </p>
+            )}
           </div>
           
           <div className="space-y-2">
@@ -86,8 +141,18 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
 
           {error && (
             <Alert className="border-red-200 bg-red-50">
+              <AlertCircle className="h-4 w-4 text-red-600" />
               <AlertDescription className="text-red-700">
                 {error}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {success && (
+            <Alert className="border-green-200 bg-green-50">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-700">
+                {success}
               </AlertDescription>
             </Alert>
           )}
@@ -120,4 +185,4 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
       </CardContent>
     </Card>
   );
-}; 
+};

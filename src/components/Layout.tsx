@@ -49,9 +49,9 @@ const Layout = ({ children }: LayoutProps) => {
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">CA</span>
+                <span className="text-white font-bold text-lg">F&</span>
               </div>
-              <span className="font-bold text-xl text-gray-900">CLOSED AI</span>
+              <span className="font-bold text-xl text-gray-900">Front&</span>
             </Link>
 
             {/* Desktop Navigation */}
@@ -224,12 +224,12 @@ const Layout = ({ children }: LayoutProps) => {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <div className="w-6 h-6 bg-primary-500 rounded flex items-center justify-center">
-                  <span className="text-white font-bold text-xs">CA</span>
+              <Link to="/" className="flex items-center space-x-2 mb-6">
+                <div className="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center">
+                  <span className="text-white font-bold text-xl">F&</span>
                 </div>
-                <span className="font-bold text-gray-900">CLOSED AI</span>
-              </div>
+                <span className="font-bold text-gray-900">Front&</span>
+              </Link>
               <p className="text-sm text-gray-600">
                 The OS for Workflows. Open source task automation platform for AI workflows.
               </p>
@@ -266,7 +266,7 @@ const Layout = ({ children }: LayoutProps) => {
           
           <div className="border-t mt-8 pt-8">
             <p className="text-sm text-gray-600 text-center">
-              © 2024 CLOSED AI. All rights reserved.
+              © 2024 Front&. All rights reserved.
             </p>
           </div>
         </div>

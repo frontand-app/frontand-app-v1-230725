@@ -61,8 +61,9 @@ export const useExecutionStatus = (executionId: string) => {
     queryKey: ['executions', executionId],
     queryFn: () => apiClient.getExecutionStatus(executionId),
     enabled: !!executionId,
-    refetchInterval: (data) => {
+    refetchInterval: (query) => {
       // Stop polling if execution is completed or failed
+      const data = query.state.data;
       if (data?.status === 'completed' || data?.status === 'failed') {
         return false;
       }
@@ -113,4 +114,4 @@ export const useAddCredits = () => {
       queryClient.invalidateQueries({ queryKey: ['user'] });
     },
   });
-}; 
+};

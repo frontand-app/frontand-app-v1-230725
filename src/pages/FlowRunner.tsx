@@ -237,7 +237,7 @@ const FlowRunner: React.FC = () => {
 
   const executeWorkflowAPI = async (workflowId: string, inputs: any, userId?: string): Promise<any> => {
     // Quick toggle: Set to false to use mock data while testing
-    const USE_REAL_MODAL = true; // Change to true when Modal endpoint is ready
+    const USE_REAL_MODAL = false; // Change to true when Modal endpoint is ready
     
     // Direct Modal integration for Loop Over Rows workflow
     if ((workflowId === '550e8400-e29b-41d4-a716-446655440001' || workflowId === 'loop-over-rows') && USE_REAL_MODAL) {

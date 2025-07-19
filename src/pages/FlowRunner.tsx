@@ -86,7 +86,7 @@ const FlowRunner: React.FC = () => {
         name: id === 'cluster-keywords' ? 'Cluster Keywords' : 
               id === 'sentiment-analysis' ? 'Sentiment Analysis' :
               id === 'google-sheets-processor' ? 'Google Sheets Processor' :
-              id === '550e8400-e29b-41d4-a716-446655440001' ? 'Loop Over Rows - AI Batch Processing' :
+              (id === '550e8400-e29b-41d4-a716-446655440001' || id === 'loop-over-rows') ? 'Loop Over Rows - AI Batch Processing' :
               'Data Enrichment',
         description: id === 'cluster-keywords' 
           ? 'Automatically group and categorize keywords using AI clustering algorithms'
@@ -94,14 +94,14 @@ const FlowRunner: React.FC = () => {
           ? 'Analyze emotional tone and sentiment in text content'
           : id === 'google-sheets-processor'
           ? 'Process and enrich data in Google Sheets with AI'
-          : id === '550e8400-e29b-41d4-a716-446655440001'
+          : (id === '550e8400-e29b-41d4-a716-446655440001' || id === 'loop-over-rows')
           ? 'Scalable AI processing with Gemini 2.5-Flash. Transform any workflow into a highly scalable AI processing pipeline with row-keyed object structure and webhook delivery.'
           : 'Enrich your data with additional information and insights',
         category: 'Text Analysis',
         creator: 'CLOSED AI Team',
         rating: 4.8,
         estimatedTime: '30 seconds',
-        estimatedCost: id === '550e8400-e29b-41d4-a716-446655440001' ? '0.08 credits' : '0.1 credits',
+        estimatedCost: (id === '550e8400-e29b-41d4-a716-446655440001' || id === 'loop-over-rows') ? '0.08 credits' : '0.1 credits',
         inputs: id === 'cluster-keywords' ? [
           {
             id: 'keywords',
@@ -152,7 +152,7 @@ const FlowRunner: React.FC = () => {
               { value: 'de', label: 'German' }
             ]
           }
-        ] : id === '550e8400-e29b-41d4-a716-446655440001' ? [
+        ] : (id === '550e8400-e29b-41d4-a716-446655440001' || id === 'loop-over-rows') ? [
           {
             id: 'data',
             type: 'textarea',
@@ -214,7 +214,7 @@ const FlowRunner: React.FC = () => {
         defaults.keywords = defaults.keywords || 'digital marketing, online marketing, social media marketing, content marketing, email marketing, SEO, SEM, PPC, Facebook ads, Google ads, Instagram marketing, LinkedIn marketing, Twitter marketing, YouTube marketing, affiliate marketing, influencer marketing, video marketing, mobile marketing, marketing automation, conversion optimization';
       } else if (id === 'sentiment-analysis') {
         defaults.text = defaults.text || 'I absolutely love this new product! The design is incredible and it works perfectly. The customer service team was also super helpful when I had questions. Highly recommend!';
-      } else if (id === '550e8400-e29b-41d4-a716-446655440001') {
+      } else if (id === '550e8400-e29b-41d4-a716-446655440001' || id === 'loop-over-rows') {
         // Set simple user-friendly default - will be converted to JSON automatically
         defaults.data = defaults.data || '{"row1": ["AI chatbot for customer service"], "row2": ["automated email marketing platform"], "row3": ["machine learning analytics dashboard"], "row4": ["voice-activated smart home assistant"], "row5": ["blockchain payment processor"]}';
         defaults.prompt = defaults.prompt || 'Evaluate each keyword for relevance to AI automation and enterprise market potential. Rate 0-100 and explain why.';
@@ -240,7 +240,7 @@ const FlowRunner: React.FC = () => {
     const USE_REAL_MODAL = true; // Change to true when Modal endpoint is ready
     
     // Direct Modal integration for Loop Over Rows workflow
-    if (workflowId === '550e8400-e29b-41d4-a716-446655440001' && USE_REAL_MODAL) {
+    if ((workflowId === '550e8400-e29b-41d4-a716-446655440001' || workflowId === 'loop-over-rows') && USE_REAL_MODAL) {
       try {
         console.log('🚀 Calling real Modal endpoint...');
         
@@ -402,191 +402,80 @@ Original error: ${errorMessage}`);
         execution_id: 'demo_' + Date.now(),
         credits_used: CreditsService.calculateWorkflowCost(workflowId, inputs)
       };
-    } else if (workflowId === 'sentiment-analysis') {
+    }
+
+    if (workflowId === 'sentiment-analysis') {
       const text = inputs.text || '';
-      const positiveWords = ['love', 'great', 'amazing', 'excellent', 'wonderful', 'fantastic', 'good', 'happy'];
-      const negativeWords = ['hate', 'bad', 'terrible', 'awful', 'horrible', 'sad', 'angry', 'disappointed'];
+      const sentiments = ['positive', 'negative', 'neutral'];
+      const randomSentiment = sentiments[Math.floor(Math.random() * sentiments.length)];
       
-      const textLower = text.toLowerCase();
-      const positiveCount = positiveWords.filter(word => textLower.includes(word)).length;
-      const negativeCount = negativeWords.filter(word => textLower.includes(word)).length;
-      
-      let sentiment = 'neutral';
-      let score = 0.5;
-      
-      if (positiveCount > negativeCount) {
-        sentiment = 'positive';
-        score = 0.5 + (positiveCount / (positiveCount + negativeCount)) * 0.5;
-      } else if (negativeCount > positiveCount) {
-        sentiment = 'negative';
-        score = 0.5 - (negativeCount / (positiveCount + negativeCount)) * 0.5;
-      }
-
       return {
         success: true,
         results: {
-          sentiment,
-          confidence: Math.min(0.95, 0.6 + Math.abs(positiveCount - negativeCount) * 0.1),
-          score,
+          sentiment: randomSentiment,
+          score: Math.random() * 0.4 + (randomSentiment === 'positive' ? 0.6 : randomSentiment === 'negative' ? 0.1 : 0.3),
+          confidence: Math.random() * 0.3 + 0.7,
           emotions: {
-            joy: sentiment === 'positive' ? score * 0.8 : 0.1,
-            sadness: sentiment === 'negative' ? (1 - score) * 0.8 : 0.1,
-            anger: sentiment === 'negative' ? (1 - score) * 0.6 : 0.05,
-            fear: sentiment === 'negative' ? (1 - score) * 0.4 : 0.05,
-            surprise: 0.2,
-            trust: sentiment === 'positive' ? score * 0.7 : 0.3
+            joy: Math.random() * (randomSentiment === 'positive' ? 0.8 : 0.3),
+            anger: Math.random() * (randomSentiment === 'negative' ? 0.7 : 0.2),
+            sadness: Math.random() * (randomSentiment === 'negative' ? 0.6 : 0.1),
+            fear: Math.random() * 0.3,
+            surprise: Math.random() * 0.4
           },
-          processingTime: '1.8s'
-        },
-        execution_id: 'demo_' + Date.now(),
-        credits_used: CreditsService.calculateWorkflowCost(workflowId, inputs)
-      };
-    } else if (workflowId === 'google-sheets-processor') {
-      // Generate mock Google Sheets table data
-      const sampleData: TableData = {
-        columns: [
-          { key: 'id', label: 'ID', type: 'number', sortable: true, width: '80px' },
-          { key: 'name', label: 'Full Name', type: 'text', sortable: true, filterable: true },
-          { key: 'email', label: 'Email', type: 'email', sortable: true, filterable: true },
-          { key: 'company', label: 'Company', type: 'text', sortable: true, filterable: true },
-          { key: 'status', label: 'Status', type: 'status', sortable: true, filterable: true },
-          { key: 'last_activity', label: 'Last Activity', type: 'date', sortable: true },
-          { key: 'total_orders', label: 'Orders', type: 'number', sortable: true },
-          { key: 'revenue', label: 'Revenue', type: 'currency', sortable: true }
-        ],
-        rows: [
-          {
-            id: 1,
-            name: 'John Smith',
-            email: 'john.smith@techcorp.com',
-            company: 'TechCorp Inc.',
-            status: 'active',
-            last_activity: '2024-01-14T15:30:00Z',
-            total_orders: 12,
-            revenue: 2450.50
-          },
-          {
-            id: 2,
-            name: 'Sarah Johnson',
-            email: 'sarah.j@innovate.io',
-            company: 'Innovate Solutions',
-            status: 'active',
-            last_activity: '2024-01-13T09:15:00Z',
-            total_orders: 8,
-            revenue: 1875.00
-          },
-          {
-            id: 3,
-            name: 'Michael Davis',
-            email: 'mdavis@startup.com',
-            company: 'StartupXYZ',
-            status: 'pending',
-            last_activity: '2024-01-12T14:22:00Z',
-            total_orders: 3,
-            revenue: 650.25
-          },
-          {
-            id: 4,
-            name: 'Emily Chen',
-            email: 'emily.chen@bigcorp.com',
-            company: 'BigCorp Ltd.',
-            status: 'active',
-            last_activity: '2024-01-15T11:45:00Z',
-            total_orders: 25,
-            revenue: 5200.75
-          },
-          {
-            id: 5,
-            name: 'David Wilson',
-            email: 'dwilson@freelance.com',
-            company: 'Freelancer',
-            status: 'inactive',
-            last_activity: '2024-01-08T16:30:00Z',
-            total_orders: 1,
-            revenue: 125.00
-          },
-          {
-            id: 6,
-            name: 'Lisa Martinez',
-            email: 'lisa.m@consulting.pro',
-            company: 'Pro Consulting',
-            status: 'active',
-            last_activity: '2024-01-15T08:20:00Z',
-            total_orders: 15,
-            revenue: 3250.00
-          }
-        ],
-        metadata: {
-          totalRows: 150,
-          source: 'Google Sheets',
-          lastUpdated: new Date().toISOString(),
-          processingTime: '3.2s',
-          successCount: 148,
-          errorCount: 2
-        }
-      };
-
-      return {
-        success: true,
-        results: {
-          type: 'table',
-          data: sampleData
+          processingTime: '1.2s'
         },
         execution_id: 'demo_' + Date.now(),
         credits_used: CreditsService.calculateWorkflowCost(workflowId, inputs)
       };
     }
 
-    // Loop Over Rows workflow - simulate AI batch processing results
-    if (workflowId === '550e8400-e29b-41d4-a716-446655440001') {
+    // Enhanced mock results for Loop Over Rows workflow 
+    if (workflowId === '550e8400-e29b-41d4-a716-446655440001' || workflowId === 'loop-over-rows') {
       try {
         const data = typeof inputs.data === 'string' ? JSON.parse(inputs.data) : inputs.data;
-        const rowKeys = Object.keys(data);
-        const prompt = inputs.prompt || 'Evaluate this data';
+        const headers = ['Keyword', 'Score', 'Rationale'];
         
-        // Simulate AI processing results for each row
-        const processedData: Record<string, any> = {};
+        // Generate realistic AI evaluation results
+        const processedData: Record<string, any[]> = {};
         
-        rowKeys.forEach(rowKey => {
-          const rowData = data[rowKey];
-          const keyword = Array.isArray(rowData) ? rowData[0] : rowData;
-          
-          // Generate realistic AI evaluation scores and rationales
+        Object.entries(data).forEach(([rowKey, rowValue]: [string, any]) => {
+          const keyword = Array.isArray(rowValue) ? rowValue[0] : rowValue;
           const score = Math.floor(Math.random() * 40) + 60; // 60-100 range
-          const rationales = [
-            `High market demand for ${keyword} solutions in enterprise sector`,
-            `Strong alignment with current AI automation trends`,
-            `Competitive landscape shows growing opportunities`,
-            `Implementation complexity is manageable with modern AI tools`,
-            `Revenue potential significant for B2B applications`,
-            `Market saturation is low, good entry opportunity`,
-            `Technical feasibility high with current AI capabilities`
-          ];
           
-          const rationale = rationales[Math.floor(Math.random() * rationales.length)];
+          // Generate contextual rationale based on keyword
+          let rationale = '';
+          if (keyword.toLowerCase().includes('ai') || keyword.toLowerCase().includes('automation')) {
+            rationale = 'High market potential in AI sector with strong enterprise demand and growing automation trends.';
+          } else if (keyword.toLowerCase().includes('marketing') || keyword.toLowerCase().includes('social')) {
+            rationale = 'Established market with good growth potential, especially for digital marketing solutions.';
+          } else if (keyword.toLowerCase().includes('blockchain') || keyword.toLowerCase().includes('crypto')) {
+            rationale = 'Emerging technology with high innovation potential but regulatory uncertainty affects market timing.';
+          } else {
+            rationale = 'Moderate market potential with opportunities for differentiation through innovative approaches.';
+          }
           
           processedData[rowKey] = [keyword, score, rationale];
         });
 
+        // Return in table format for better display
         const tableData = {
-          columns: [
-            { key: 'keyword', label: 'Keyword', type: 'text' },
-            { key: 'score', label: 'AI Score', type: 'number' },
-            { key: 'rationale', label: 'Rationale', type: 'text' }
-          ],
-          rows: rowKeys.map((rowKey, index) => ({
+          columns: headers.map((header, index) => ({
+            key: header.toLowerCase().replace(/\s+/g, '_'),
+            label: header,
+            type: index === 1 ? 'number' : 'text'
+          })),
+          rows: Object.entries(processedData).map(([rowKey, rowData], index) => ({
             id: index + 1,
-            keyword: processedData[rowKey][0],
-            score: processedData[rowKey][1],
-            rationale: processedData[rowKey][2]
+            keyword: rowData[0],
+            score: rowData[1],
+            rationale: rowData[2]
           })),
           metadata: {
-            totalRows: rowKeys.length,
-            successfulRows: rowKeys.length,
+            totalRows: Object.keys(processedData).length,
+            successfulRows: Object.keys(processedData).length,
             failedRows: 0,
-            processingTime: '2.4s',
-            model: 'gemini-2.5-flash',
-            prompt: prompt.substring(0, 50) + '...'
+            processingTime: '45s',
+            model: 'gemini-2.5-flash-demo'
           }
         };
 
@@ -597,20 +486,20 @@ Original error: ${errorMessage}`);
             data: tableData,
             raw_output: processedData
           },
-          execution_id: 'modal_' + Date.now(),
+          execution_id: 'demo_' + Date.now(),
           credits_used: CreditsService.calculateWorkflowCost(workflowId, inputs)
         };
+        
       } catch (error) {
+        console.error('Error processing mock Loop Over Rows data:', error);
         return {
           success: false,
-          error: 'Invalid data format. Please use row-keyed JSON object.',
-          execution_id: 'error_' + Date.now(),
-          credits_used: 0
+          error: 'Failed to process input data. Please check your data format.'
         };
       }
     }
 
-    // Default response for other workflows
+    // Default fallback
     return {
       success: true,
       results: {
@@ -699,7 +588,7 @@ Original error: ${errorMessage}`);
     const value = formData[input.id] || input.default || '';
 
     // Special handling for Loop Over Rows data input - make it user-friendly!
-    if (workflow?.id === '550e8400-e29b-41d4-a716-446655440001' && input.id === 'data') {
+    if ((workflow?.id === '550e8400-e29b-41d4-a716-446655440001' || workflow?.id === 'loop-over-rows') && input.id === 'data') {
       return (
         <div key={input.id} className="space-y-3">
           <Label htmlFor={input.id} className="text-sm font-medium">
@@ -991,7 +880,7 @@ blockchain payment processor`}
     }
 
     // Handle table output for Google Sheets and Loop Over Rows workflows
-    if ((workflow?.id === 'google-sheets-processor' || workflow?.id === '550e8400-e29b-41d4-a716-446655440001') && results.type === 'table') {
+    if ((workflow?.id === 'google-sheets-processor' || workflow?.id === '550e8400-e29b-41d4-a716-446655440001' || workflow?.id === 'loop-over-rows') && results.type === 'table') {
       return (
         <TableOutput
           data={results.data}

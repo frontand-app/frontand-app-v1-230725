@@ -38,11 +38,10 @@ const Layout = ({ children }: LayoutProps) => {
     loadUserProfile();
   }, [user]);
 
+  // V1 Simplified Navigation - focus on single workflow
   const navigation = [
     { name: "Home", href: "/" },
-    { name: "Flow Library", href: "/flows" },
-    { name: "Dashboard", href: "/dashboard" },
-    { name: "Creators", href: "/creators" },
+    { name: "Loop Over Rows", href: "/flows/loop-over-rows" },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -91,7 +90,7 @@ const Layout = ({ children }: LayoutProps) => {
             <div className="hidden md:flex items-center space-x-4">
               <Button variant="ghost" size="sm" asChild>
                 <a
-                  href="https://github.com/closedai/closedai"
+                  href="https://github.com/frontand-app/frontand-app-v1-clean"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center space-x-2 text-gray-700 hover:text-primary-600"
@@ -125,26 +124,23 @@ const Layout = ({ children }: LayoutProps) => {
                     </div>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                      <Link to="/dashboard" className="flex items-center">
-                        <Settings className="mr-2 h-4 w-4" />
-                        Dashboard
+                      <Link to="/dashboard" className="w-full cursor-pointer">
+                        <Settings className="w-4 h-4 mr-2" />
+                        Account Settings
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/creators" className="flex items-center">
-                        <BarChart3 className="mr-2 h-4 w-4" />
-                        Creator Dashboard
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/billing" className="flex items-center">
-                      <CreditCard className="mr-2 h-4 w-4" />
-                      Billing
+                      <Link to="/billing" className="w-full cursor-pointer">
+                        <CreditCard className="w-4 h-4 mr-2" />
+                        Billing & Usage
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleSignOut}>
-                      <LogOut className="mr-2 h-4 w-4" />
+                    <DropdownMenuItem 
+                      onClick={handleSignOut}
+                      className="w-full cursor-pointer text-red-600"
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
                       Sign out
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -157,45 +153,47 @@ const Layout = ({ children }: LayoutProps) => {
             </div>
 
             {/* Mobile menu button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="md:hidden"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              {isMobileMenuOpen ? (
-                <X className="w-5 h-5" />
-              ) : (
-                <Menu className="w-5 h-5" />
-              )}
-            </Button>
+            <div className="md:hidden">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              >
+                {isMobileMenuOpen ? (
+                  <X className="w-6 h-6" />
+                ) : (
+                  <Menu className="w-6 h-6" />
+                )}
+              </Button>
+            </div>
           </div>
 
           {/* Mobile Navigation */}
           {isMobileMenuOpen && (
-            <div className="md:hidden border-t bg-white py-4">
+            <div className="md:hidden border-t border-gray-200 py-4">
               <nav className="flex flex-col space-y-4">
                 {navigation.map((item) => (
                   <Link
                     key={item.name}
                     to={item.href}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`text-sm font-medium transition-colors hover:text-primary-600 ${
+                    className={`text-sm font-medium px-2 py-1 rounded transition-colors ${
                       isActive(item.href)
-                        ? "text-primary-600"
-                        : "text-gray-700"
+                        ? "text-primary-600 bg-primary-50"
+                        : "text-gray-700 hover:text-primary-600"
                     }`}
+                    onClick={() => setIsMobileMenuOpen(false)}
                   >
                     {item.name}
                   </Link>
                 ))}
-                <div className="flex flex-col space-y-2 pt-4 border-t">
-                  <Button variant="ghost" size="sm" asChild>
+                
+                <div className="border-t pt-4">
+                  <Button variant="ghost" size="sm" className="w-full justify-start mb-2" asChild>
                     <a
-                      href="https://github.com/closedai/closedai"
+                      href="https://github.com/frontand-app/frontand-app-v1-clean"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center space-x-2 justify-start text-gray-700 hover:text-primary-600"
+                      className="flex items-center space-x-2 text-gray-700 hover:text-primary-600"
                     >
                       <Github className="w-4 h-4" />
                       <span>GitHub</span>
@@ -210,13 +208,7 @@ const Layout = ({ children }: LayoutProps) => {
                       <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
                         <Link to="/dashboard">
                           <Settings className="w-4 h-4 mr-2" />
-                          Dashboard
-                        </Link>
-                      </Button>
-                      <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
-                        <Link to="/creators">
-                          <BarChart3 className="w-4 h-4 mr-2" />
-                          Creator Dashboard
+                          Account Settings
                         </Link>
                       </Button>
                       <Button variant="ghost" size="sm" className="w-full justify-start" onClick={handleSignOut}>
@@ -241,55 +233,26 @@ const Layout = ({ children }: LayoutProps) => {
         {children}
       </main>
 
-      {/* Footer */}
+      {/* V1 Simplified Footer */}
       <footer className="border-t bg-gray-50 mt-16">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="space-y-4">
-              <Link to="/" className="flex items-center space-x-2 mb-6">
-                <div className="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center">
-                  <span className="text-white font-bold text-xl">F&</span>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+            <div className="flex items-center space-x-4">
+              <Link to="/" className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">F&</span>
                 </div>
                 <span className="font-bold text-gray-900">Front&</span>
               </Link>
-              <p className="text-sm text-gray-600">
-                The OS for Workflows. Open source task automation platform for AI workflows.
-              </p>
+              <span className="text-sm text-gray-600">One frontend, infinite cloud apps</span>
             </div>
             
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-4">Product</h3>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li><Link to="/flows" className="hover:text-gray-900">Flow Library</Link></li>
-                <li><Link to="/dashboard" className="hover:text-gray-900">Dashboard</Link></li>
-                <li><Link to="/creators" className="hover:text-gray-900">Creator Dashboard</Link></li>
-                <li><Link to="/billing" className="hover:text-gray-900">Pricing</Link></li>
-              </ul>
+            <div className="flex items-center space-x-6 text-sm text-gray-600">
+              <a href="https://github.com/frontand-app/frontand-app-v1-clean" target="_blank" rel="noopener noreferrer" className="hover:text-gray-900">
+                GitHub
+              </a>
+              <span>© 2024 Front&</span>
             </div>
-            
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-4">Resources</h3>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li><Link to="/docs" className="hover:text-gray-900">Documentation</Link></li>
-                <li><Link to="/docs" className="hover:text-gray-900">API Reference</Link></li>
-                <li><a href="https://github.com/closedai/closedai/discussions" target="_blank" rel="noopener noreferrer" className="hover:text-gray-900">Community</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-4">Company</h3>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li><Link to="/about" className="hover:text-gray-900">About</Link></li>
-                <li><a href="https://github.com/closedai/closedai" target="_blank" rel="noopener noreferrer" className="hover:text-gray-900">Blog</a></li>
-                <li><a href="https://github.com/closedai" target="_blank" rel="noopener noreferrer" className="hover:text-gray-900">GitHub</a></li>
-              </ul>
-            </div>
-          </div>
-          
-          <div className="border-t mt-8 pt-8">
-            <p className="text-sm text-gray-600 text-center">
-              © 2024 Front&. All rights reserved.
-            </p>
           </div>
         </div>
       </footer>

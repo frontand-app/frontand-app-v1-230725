@@ -156,10 +156,10 @@ const FlowRunner: React.FC = () => {
           {
             id: 'data',
             type: 'textarea',
-            label: 'Input Data',
-            description: 'Row-keyed data object. Example: {"row1": ["enterprise chatbot"], "row2": ["AI assistant"]}',
+            label: 'Your Data',
+            description: 'Upload a CSV file or paste your data - one item per line. We\'ll handle the technical formatting for you!',
             required: true,
-            placeholder: '{"row1": ["enterprise chatbot"], "row2": ["AI automation platform"], "row3": ["machine learning analytics"]}'
+            placeholder: 'AI chatbot for customer service\nautomated email marketing platform\nmachine learning analytics dashboard'
           },
           {
             id: 'headers',
@@ -215,6 +215,7 @@ const FlowRunner: React.FC = () => {
       } else if (id === 'sentiment-analysis') {
         defaults.text = defaults.text || 'I absolutely love this new product! The design is incredible and it works perfectly. The customer service team was also super helpful when I had questions. Highly recommend!';
       } else if (id === '550e8400-e29b-41d4-a716-446655440001') {
+        // Set simple user-friendly default - will be converted to JSON automatically
         defaults.data = defaults.data || '{"row1": ["AI chatbot for customer service"], "row2": ["automated email marketing platform"], "row3": ["machine learning analytics dashboard"], "row4": ["voice-activated smart home assistant"], "row5": ["blockchain payment processor"]}';
         defaults.prompt = defaults.prompt || 'Evaluate each keyword for relevance to AI automation and enterprise market potential. Rate 0-100 and explain why.';
       }
@@ -695,22 +696,146 @@ Original error: ${errorMessage}`);
   };
 
   const renderInput = (input: any) => {
-    const value = formData[input.id] || '';
-    
+    const value = formData[input.id] || input.default || '';
+
+    // Special handling for Loop Over Rows data input - make it user-friendly!
+    if (workflow?.id === '550e8400-e29b-41d4-a716-446655440001' && input.id === 'data') {
+      return (
+        <div key={input.id} className="space-y-3">
+          <Label htmlFor={input.id} className="text-sm font-medium">
+            {input.label} {input.required && <span className="text-red-500">*</span>}
+          </Label>
+          
+          {/* CSV Upload */}
+          <div className="space-y-4">
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-400 transition-colors">
+              <div className="text-center">
+                <div className="text-2xl mb-2">📁</div>
+                <h3 className="text-sm font-medium text-gray-900 mb-1">Upload CSV File</h3>
+                <p className="text-xs text-gray-500 mb-3">Drag and drop your CSV file or click to browse</p>
+                <input
+                  type="file"
+                  accept=".csv,.txt"
+                  className="hidden"
+                  id="csv-upload"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = (event) => {
+                        const csvText = event.target?.result as string;
+                        const jsonData = convertCSVtoJSON(csvText);
+                        handleInputChange(input.id, JSON.stringify(jsonData));
+                      };
+                      reader.readAsText(file);
+                    }
+                  }}
+                />
+                <label 
+                  htmlFor="csv-upload" 
+                  className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 cursor-pointer"
+                >
+                  Choose CSV File
+                </label>
+              </div>
+            </div>
+
+            {/* OR Divider */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="px-2 bg-white text-gray-500">OR</span>
+              </div>
+            </div>
+
+            {/* Simple Paste Area */}
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-gray-700">
+                Paste Your Data (One item per line)
+              </Label>
+              <Textarea
+                value={convertJSONtoSimpleText(value)}
+                onChange={(e) => {
+                  const simpleText = e.target.value;
+                  const jsonData = convertSimpleTextToJSON(simpleText);
+                  handleInputChange(input.id, JSON.stringify(jsonData));
+                }}
+                placeholder={`Paste your data here, one item per line:
+
+AI chatbot for customer service
+automated email marketing platform  
+machine learning analytics dashboard
+voice-activated smart home assistant
+blockchain payment processor`}
+                rows={8}
+                className="font-mono text-sm"
+              />
+              <p className="text-xs text-gray-500">
+                ✨ <strong>Much easier!</strong> Just paste one item per line - we'll handle the technical formatting for you.
+              </p>
+            </div>
+
+            {/* Preview */}
+            {value && (
+              <div className="mt-4 p-3 bg-gray-50 rounded-md border">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium text-gray-700">Preview</span>
+                  <span className="text-xs text-gray-500">
+                    {Object.keys(JSON.parse(value) || {}).length} rows ready for processing
+                  </span>
+                </div>
+                <div className="text-xs text-gray-600 max-h-20 overflow-y-auto">
+                  {Object.entries(JSON.parse(value) || {}).slice(0, 3).map(([key, valueArray]: [string, any]) => (
+                    <div key={key} className="truncate">
+                      • {Array.isArray(valueArray) ? valueArray[0] : valueArray}
+                    </div>
+                  ))}
+                  {Object.keys(JSON.parse(value) || {}).length > 3 && (
+                    <div className="text-gray-400">... and {Object.keys(JSON.parse(value) || {}).length - 3} more</div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // Standard input handling for other fields
     switch (input.type) {
+      case 'text':
+        return (
+          <div key={input.id} className="space-y-1">
+            <Label htmlFor={input.id} className="text-sm font-medium">
+              {input.label} {input.required && <span className="text-red-500">*</span>}
+            </Label>
+            <Input
+              id={input.id}
+              type="text"
+              value={value}
+              onChange={(e) => handleInputChange(input.id, e.target.value)}
+              placeholder={input.placeholder}
+            />
+            {input.description && (
+              <p className="text-xs text-gray-500">{input.description}</p>
+            )}
+          </div>
+        );
+
       case 'textarea':
         return (
-          <div key={input.id} className="space-y-2">
+          <div key={input.id} className="space-y-1">
             <Label htmlFor={input.id} className="text-sm font-medium">
-              {input.label}
-              {input.required && <span className="text-red-500 ml-1">*</span>}
+              {input.label} {input.required && <span className="text-red-500">*</span>}
             </Label>
             <Textarea
               id={input.id}
               value={value}
               onChange={(e) => handleInputChange(input.id, e.target.value)}
               placeholder={input.placeholder}
-              className="min-h-[100px] resize-none"
+              rows={4}
             />
             {input.description && (
               <p className="text-xs text-gray-500">{input.description}</p>
@@ -720,19 +845,18 @@ Original error: ${errorMessage}`);
 
       case 'number':
         return (
-          <div key={input.id} className="space-y-2">
+          <div key={input.id} className="space-y-1">
             <Label htmlFor={input.id} className="text-sm font-medium">
-              {input.label}
-              {input.required && <span className="text-red-500 ml-1">*</span>}
+              {input.label} {input.required && <span className="text-red-500">*</span>}
             </Label>
             <Input
               id={input.id}
               type="number"
               value={value}
-              onChange={(e) => handleInputChange(input.id, parseInt(e.target.value))}
+              onChange={(e) => handleInputChange(input.id, parseInt(e.target.value) || input.default)}
               min={input.min}
               max={input.max}
-              className="w-full"
+              placeholder={input.placeholder}
             />
             {input.description && (
               <p className="text-xs text-gray-500">{input.description}</p>
@@ -742,21 +866,23 @@ Original error: ${errorMessage}`);
 
       case 'range':
         return (
-          <div key={input.id} className="space-y-2">
+          <div key={input.id} className="space-y-1">
             <Label htmlFor={input.id} className="text-sm font-medium">
-              {input.label}: {value}
-              {input.required && <span className="text-red-500 ml-1">*</span>}
+              {input.label} {input.required && <span className="text-red-500">*</span>}
             </Label>
-            <Input
-              id={input.id}
-              type="range"
-              value={value}
-              onChange={(e) => handleInputChange(input.id, parseFloat(e.target.value))}
-              min={input.min}
-              max={input.max}
-              step={input.step}
-              className="w-full"
-            />
+            <div className="flex items-center space-x-3">
+              <input
+                id={input.id}
+                type="range"
+                min={input.min}
+                max={input.max}
+                step={input.step}
+                value={value}
+                onChange={(e) => handleInputChange(input.id, parseFloat(e.target.value))}
+                className="flex-1"
+              />
+              <span className="text-sm font-medium w-12">{value}</span>
+            </div>
             {input.description && (
               <p className="text-xs text-gray-500">{input.description}</p>
             )}
@@ -765,14 +891,16 @@ Original error: ${errorMessage}`);
 
       case 'select':
         return (
-          <div key={input.id} className="space-y-2">
+          <div key={input.id} className="space-y-1">
             <Label htmlFor={input.id} className="text-sm font-medium">
-              {input.label}
-              {input.required && <span className="text-red-500 ml-1">*</span>}
+              {input.label} {input.required && <span className="text-red-500">*</span>}
             </Label>
-            <Select value={value} onValueChange={(newValue) => handleInputChange(input.id, newValue)}>
+            <Select
+              value={value}
+              onValueChange={(newValue) => handleInputChange(input.id, newValue)}
+            >
               <SelectTrigger>
-                <SelectValue placeholder="Select an option" />
+                <SelectValue placeholder={input.placeholder} />
               </SelectTrigger>
               <SelectContent>
                 {input.options?.map((option: any) => (
@@ -790,13 +918,13 @@ Original error: ${errorMessage}`);
 
       default:
         return (
-          <div key={input.id} className="space-y-2">
+          <div key={input.id} className="space-y-1">
             <Label htmlFor={input.id} className="text-sm font-medium">
-              {input.label}
-              {input.required && <span className="text-red-500 ml-1">*</span>}
+              {input.label} {input.required && <span className="text-red-500">*</span>}
             </Label>
             <Input
               id={input.id}
+              type="text"
               value={value}
               onChange={(e) => handleInputChange(input.id, e.target.value)}
               placeholder={input.placeholder}
@@ -806,6 +934,47 @@ Original error: ${errorMessage}`);
             )}
           </div>
         );
+    }
+  };
+
+  // Helper functions for CSV/text conversion
+  const convertCSVtoJSON = (csvText: string) => {
+    const lines = csvText.trim().split('\n');
+    const result: Record<string, string[]> = {};
+    
+    lines.forEach((line, index) => {
+      if (line.trim()) {
+        // Simple CSV parsing - you might want to use a library for complex CSVs
+        const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+        result[`row${index + 1}`] = values;
+      }
+    });
+    
+    return result;
+  };
+
+  const convertSimpleTextToJSON = (text: string) => {
+    const lines = text.trim().split('\n');
+    const result: Record<string, string[]> = {};
+    
+    lines.forEach((line, index) => {
+      if (line.trim()) {
+        result[`row${index + 1}`] = [line.trim()];
+      }
+    });
+    
+    return result;
+  };
+
+  const convertJSONtoSimpleText = (jsonString: string) => {
+    try {
+      if (!jsonString) return '';
+      const data = JSON.parse(jsonString);
+      return Object.values(data)
+        .map((row: any) => Array.isArray(row) ? row[0] : row)
+        .join('\n');
+    } catch {
+      return '';
     }
   };
 

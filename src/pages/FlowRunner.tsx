@@ -895,6 +895,45 @@ blockchain payment processor`}
       );
     }
 
+    // Special handling for Loop Over Rows - always show table format
+    if (workflow?.id === 'loop-over-rows' && results.results && Array.isArray(results.results)) {
+      // Create table data from results array
+      const firstResult = results.results[0];
+      const headers = firstResult ? Object.keys(firstResult).filter(key => key !== 'row_key') : [];
+      
+      const tableData = {
+        columns: headers.map((header) => ({
+          key: header,
+          label: header.charAt(0).toUpperCase() + header.slice(1),
+          type: (header === 'score' ? 'number' : 'text') as 'number' | 'text' | 'status' | 'date' | 'currency' | 'email',
+          sortable: true
+        })),
+        rows: results.results.map((item, index) => ({
+          id: index + 1,
+          ...item
+        })),
+        metadata: {
+          totalRows: results.results.length,
+          successfulRows: results.processed_count || results.results.length,
+          failedRows: (results.total_count || results.results.length) - (results.processed_count || results.results.length),
+          processingTime: '30-60s',
+          model: 'gemini-2.5-flash'
+        }
+      };
+
+      return (
+        <TableOutput
+          data={tableData}
+          title={`${workflow.name} Results`}
+          enableSearch={true}
+          enableExport={true}
+          enablePagination={true}
+          pageSize={10}
+          maxHeight="600px"
+        />
+      );
+    }
+
     // Render results based on workflow type
     if (workflow?.id === 'cluster-keywords' && results.clusters) {
       return (

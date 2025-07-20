@@ -266,25 +266,26 @@ const FlowRunner: React.FC = () => {
         console.log('✅ Modal response received:', result);
         
         // Transform Modal response to expected format
-        if (result.data && result.headers) {
+        if (result.results && Array.isArray(result.results)) {
+          // Extract headers from first result object
+          const firstResult = result.results[0];
+          const headers = firstResult ? Object.keys(firstResult).filter(key => key !== 'row_key') : [];
+          
           const tableData = {
-            columns: result.headers.map((header, index) => ({
-              key: header.toLowerCase().replace(/\s+/g, '_'),
-              label: header,
-              type: index === 1 ? 'number' : 'text' // Assume second column is score
+            columns: headers.map((header) => ({
+              key: header,
+              label: header.charAt(0).toUpperCase() + header.slice(1), // Capitalize first letter
+              type: header === 'score' ? 'number' : 'text',
+              sortable: true
             })),
-            rows: Object.entries(result.data).map(([rowKey, rowData], index) => {
-              const row: any = { id: index + 1 };
-              result.headers.forEach((header, colIndex) => {
-                const key = header.toLowerCase().replace(/\s+/g, '_');
-                row[key] = Array.isArray(rowData) ? rowData[colIndex] : rowData;
-              });
-              return row;
-            }),
+            rows: result.results.map((item, index) => ({
+              id: index + 1,
+              ...item
+            })),
             metadata: {
-              totalRows: Object.keys(result.data).length,
-              successfulRows: result.successful_rows || Object.keys(result.data).length,
-              failedRows: result.failed_rows || 0,
+              totalRows: result.results.length,
+              successfulRows: result.processed_count || result.results.length,
+              failedRows: (result.total_count || result.results.length) - (result.processed_count || result.results.length),
               processingTime: '30-60s',
               model: 'gemini-2.5-flash'
             }
@@ -295,7 +296,7 @@ const FlowRunner: React.FC = () => {
             results: {
               type: 'table',
               data: tableData,
-              raw_output: result.data
+              raw_output: result.results
             },
             execution_id: 'modal_' + Date.now(),
             credits_used: CreditsService.calculateWorkflowCost(workflowId, inputs)

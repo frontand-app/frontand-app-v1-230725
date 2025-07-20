@@ -103,14 +103,6 @@ export const TableOutput: React.FC<TableOutputProps> = ({
     }
   };
 
-  const getScoreColor = (score: number): string => {
-    if (score >= 90) return 'bg-green-100 text-green-800 border-green-200';
-    if (score >= 70) return 'bg-blue-100 text-blue-800 border-blue-200';
-    if (score >= 50) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    if (score >= 30) return 'bg-orange-100 text-orange-800 border-orange-200';
-    return 'bg-red-100 text-red-800 border-red-200';
-  };
-
   const downloadJSON = () => {
     const jsonData = {
       title,
@@ -251,14 +243,7 @@ export const TableOutput: React.FC<TableOutputProps> = ({
                       
                       return (
                         <td key={column.key} className="px-4 py-3 text-sm">
-                          {column.key === 'score' && typeof value === 'number' ? (
-                            <Badge 
-                              variant="outline" 
-                              className={`font-semibold ${getScoreColor(value)}`}
-                            >
-                              {value}
-                            </Badge>
-                          ) : column.type === 'status' ? (
+                          {column.type === 'status' ? (
                             <Badge 
                               variant={value === 'processed' ? 'default' : 'destructive'}
                             >

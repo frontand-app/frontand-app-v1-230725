@@ -13,7 +13,6 @@ interface WorkflowLayoutProps {
     creator: string;
     rating: number;
     estimatedTime: string;
-    estimatedCost: string;
   };
   inputSection: React.ReactNode;
   outputSection: React.ReactNode;
@@ -59,10 +58,6 @@ const WorkflowLayout: React.FC<WorkflowLayoutProps> = ({
           <p className="text-lg text-gray-600 mb-4">
             {workflow.description}
           </p>
-          
-          <div className="text-sm text-primary-600 font-medium">
-            Estimated cost: {workflow.estimatedCost}
-          </div>
         </div>
 
         {/* Main Layout - Responsive Grid */}

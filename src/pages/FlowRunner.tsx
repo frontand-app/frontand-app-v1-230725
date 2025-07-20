@@ -24,7 +24,6 @@ interface WorkflowData {
   creator: string;
   rating: number;
   estimatedTime: string;
-  estimatedCost: string;
   inputs: any[];
 }
 
@@ -101,7 +100,6 @@ const FlowRunner: React.FC = () => {
         creator: 'CLOSED AI Team',
         rating: 4.8,
         estimatedTime: '30 seconds',
-        estimatedCost: (id === '550e8400-e29b-41d4-a716-446655440001' || id === 'loop-over-rows') ? '0.08 credits' : '0.1 credits',
         inputs: id === 'cluster-keywords' ? [
           {
             id: 'keywords',
@@ -157,35 +155,24 @@ const FlowRunner: React.FC = () => {
             id: 'data',
             type: 'textarea',
             label: 'Your Data',
-            description: 'Upload a CSV file or paste your data - one item per line. We\'ll handle the technical formatting for you!',
+            description: 'Upload a CSV file or paste your data including headers. First row should be column names.',
             required: true,
-            placeholder: 'AI chatbot for customer service\nautomated email marketing platform\nmachine learning analytics dashboard'
-          },
-          {
-            id: 'headers',
-            type: 'text',
-            label: 'Column Headers',
-            description: 'Comma-separated headers for your data columns',
-            required: true,
-            placeholder: 'Keyword',
-            default: 'Keyword'
+            placeholder: 'Name,Email,Company\nJohn Doe,john@example.com,Tech Corp\nJane Smith,jane@example.com,Innovation Inc\nMike Johnson,mike@example.com,StartupXYZ'
           },
           {
             id: 'prompt',
             type: 'textarea',
-            label: 'Processing Prompt',
-            description: 'Tell the AI what to do with each row. Be specific about evaluation criteria.',
+            label: 'Processing Instructions',
+            description: 'Tell the AI what analysis to perform on each row. The result will be added as a new "AI_Analysis" column.',
             required: true,
-            placeholder: 'Evaluate each keyword for relevance to AI automation and enterprise market potential. Rate 0-100 and explain why.'
+            placeholder: 'Analyze this contact for lead quality potential. Consider company size, role, and email domain. Provide a brief assessment.'
           },
           {
-            id: 'batch_size',
-            type: 'number',
-            label: 'Batch Size',
-            description: 'Number of rows to process concurrently (1-100)',
-            default: 10,
-            min: 1,
-            max: 100
+            id: 'test_mode',
+            type: 'toggle',
+            label: 'Test Mode',
+            description: 'Process only the first row as a test, or process all rows',
+            default: true
           }
         ] : [
           {
@@ -216,8 +203,8 @@ const FlowRunner: React.FC = () => {
         defaults.text = defaults.text || 'I absolutely love this new product! The design is incredible and it works perfectly. The customer service team was also super helpful when I had questions. Highly recommend!';
       } else if (id === '550e8400-e29b-41d4-a716-446655440001' || id === 'loop-over-rows') {
         // Set simple user-friendly default - will be converted to JSON automatically
-        defaults.data = defaults.data || '{"row1": ["AI chatbot for customer service"], "row2": ["automated email marketing platform"], "row3": ["machine learning analytics dashboard"], "row4": ["voice-activated smart home assistant"], "row5": ["blockchain payment processor"]}';
-        defaults.prompt = defaults.prompt || 'Evaluate each keyword for relevance to AI automation and enterprise market potential. Rate 0-100 and explain why.';
+        defaults.data = defaults.data || '{"Name": "John Doe", "Email": "john@example.com", "Company": "Tech Corp"}';
+        defaults.prompt = defaults.prompt || 'Analyze this contact for lead quality potential. Consider company size, role, and email domain. Provide a brief assessment.';
       }
       
       setFormData(prev => ({ ...defaults, ...prev }));
@@ -244,16 +231,32 @@ const FlowRunner: React.FC = () => {
       try {
         console.log('🚀 Calling real Modal endpoint...');
         
+        // Parse CSV data
+        const csvData = inputs.data;
+        const lines = csvData.trim().split('\n');
+        const headers = lines[0].split(',').map(h => h.trim());
+        const dataRows = lines.slice(1).map(line => line.split(',').map(cell => cell.trim()));
+        
+        // Process only first row if test mode, otherwise all rows
+        const rowsToProcess = inputs.test_mode ? dataRows.slice(0, 1) : dataRows;
+        
+        // Convert to Modal format
+        const modalData = {};
+        rowsToProcess.forEach((row, index) => {
+          const rowKey = `row${index + 1}`;
+          modalData[rowKey] = row;
+        });
+        
         const response = await fetch('https://scaile--loop-over-rows-fastapi-app.modal.run/process', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            data: typeof inputs.data === 'string' ? JSON.parse(inputs.data) : inputs.data,
-            headers: inputs.headers.split(',').map(h => h.trim()),
+            data: modalData,
+            headers: headers,
             prompt: inputs.prompt,
-            batch_size: inputs.batch_size || 10
+            batch_size: inputs.test_mode ? 1 : 10
           })
         });
 
@@ -269,13 +272,13 @@ const FlowRunner: React.FC = () => {
         if (result.results && Array.isArray(result.results)) {
           // Extract headers from first result object
           const firstResult = result.results[0];
-          const headers = firstResult ? Object.keys(firstResult).filter(key => key !== 'row_key') : [];
+          const responseHeaders = firstResult ? Object.keys(firstResult).filter(key => key !== 'row_key') : [];
           
           const tableData = {
-            columns: headers.map((header) => ({
+            columns: responseHeaders.map((header) => ({
               key: header,
-              label: header.charAt(0).toUpperCase() + header.slice(1), // Capitalize first letter
-              type: header === 'score' ? 'number' : 'text',
+              label: header === 'rationale' ? 'AI_Analysis' : header.charAt(0).toUpperCase() + header.slice(1),
+              type: 'text' as 'number' | 'text' | 'status' | 'date' | 'currency' | 'email',
               sortable: true
             })),
             rows: result.results.map((item, index) => ({
@@ -299,7 +302,7 @@ const FlowRunner: React.FC = () => {
               raw_output: result.results
             },
             execution_id: 'modal_' + Date.now(),
-            credits_used: CreditsService.calculateWorkflowCost(workflowId, inputs)
+            credits_used: 0 // Remove credits for now
           };
         }
 
@@ -308,7 +311,7 @@ const FlowRunner: React.FC = () => {
           success: true,
           results: result,
           execution_id: 'modal_' + Date.now(),
-          credits_used: CreditsService.calculateWorkflowCost(workflowId, inputs)
+          credits_used: 0 // Remove credits for now
         };
 
       } catch (error) {
@@ -590,105 +593,140 @@ Original error: ${errorMessage}`);
 
     // Special handling for Loop Over Rows data input - make it user-friendly!
     if ((workflow?.id === '550e8400-e29b-41d4-a716-446655440001' || workflow?.id === 'loop-over-rows') && input.id === 'data') {
+      const [showPaste, setShowPaste] = useState(false);
+      const value = formData[input.id] as string || '';
+
+      const parseCSVData = (csvText: string) => {
+        if (!csvText.trim()) return { headers: [], rows: [], preview: [] };
+        
+        const lines = csvText.trim().split('\n');
+        if (lines.length === 0) return { headers: [], rows: [], preview: [] };
+        
+        // First line is headers
+        const headers = lines[0].split(',').map(h => h.trim());
+        
+        // Rest are data rows
+        const rows = lines.slice(1).map(line => 
+          line.split(',').map(cell => cell.trim())
+        );
+        
+        // Create preview for display
+        const preview = rows.slice(0, 5); // Show first 5 rows
+        
+        return { headers, rows, preview };
+      };
+
+      const handleCSVPaste = (text: string) => {
+        setFormData(prev => ({ ...prev, [input.id]: text }));
+      };
+
+      const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file && file.type === 'text/csv') {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const text = e.target?.result as string;
+            handleCSVPaste(text);
+          };
+          reader.readAsText(file);
+        }
+      };
+
+      const { headers, rows, preview } = parseCSVData(value);
+
       return (
-        <div key={input.id} className="space-y-3">
-          <Label htmlFor={input.id} className="text-sm font-medium">
-            {input.label} {input.required && <span className="text-red-500">*</span>}
-          </Label>
-          
-          {/* CSV Upload */}
-          <div className="space-y-4">
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-400 transition-colors">
-              <div className="text-center">
-                <div className="text-2xl mb-2">📁</div>
-                <h3 className="text-sm font-medium text-gray-900 mb-1">Upload CSV File</h3>
-                <p className="text-xs text-gray-500 mb-3">Drag and drop your CSV file or click to browse</p>
-                <input
-                  type="file"
-                  accept=".csv,.txt"
-                  className="hidden"
-                  id="csv-upload"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onload = (event) => {
-                        const csvText = event.target?.result as string;
-                        const jsonData = convertCSVtoJSON(csvText);
-                        handleInputChange(input.id, JSON.stringify(jsonData));
-                      };
-                      reader.readAsText(file);
-                    }
-                  }}
-                />
-                <label 
-                  htmlFor="csv-upload" 
-                  className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 cursor-pointer"
-                >
-                  Choose CSV File
-                </label>
-              </div>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {input.label}
+                {input.required && <span className="text-red-500 ml-1">*</span>}
+              </label>
+              <p className="text-sm text-gray-500">{input.description}</p>
             </div>
+          </div>
 
-            {/* OR Divider */}
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-xs">
-                <span className="px-2 bg-white text-gray-500">OR</span>
-              </div>
+          {/* File Upload Section */}
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+            <div className="mx-auto w-12 h-12 text-gray-400 mb-4">
+              📁
             </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Upload CSV File</h3>
+            <p className="text-sm text-gray-500 mb-4">Drag and drop your CSV file or click to browse</p>
+            <input
+              type="file"
+              accept=".csv"
+              onChange={handleFileUpload}
+              className="hidden"
+              id="csv-upload"
+            />
+            <label htmlFor="csv-upload">
+              <Button type="button" variant="outline" className="cursor-pointer">
+                Choose CSV File
+              </Button>
+            </label>
+          </div>
 
-            {/* Simple Paste Area */}
-            <div className="space-y-2">
-              <Label className="text-xs font-medium text-gray-700">
-                Paste Your Data (One item per line)
-              </Label>
-              <Textarea
-                value={convertJSONtoSimpleText(value)}
-                onChange={(e) => {
-                  const simpleText = e.target.value;
-                  const jsonData = convertSimpleTextToJSON(simpleText);
-                  handleInputChange(input.id, JSON.stringify(jsonData));
-                }}
-                placeholder={`Paste your data here, one item per line:
+          <div className="text-center text-gray-500 font-medium">OR</div>
 
-AI chatbot for customer service
-automated email marketing platform  
-machine learning analytics dashboard
-voice-activated smart home assistant
-blockchain payment processor`}
-                rows={8}
-                className="font-mono text-sm"
-              />
-              <p className="text-xs text-gray-500">
-                ✨ <strong>Much easier!</strong> Just paste one item per line - we'll handle the technical formatting for you.
-              </p>
-            </div>
+          {/* Paste Section */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Paste Your Data (Include Headers)
+            </label>
+            <textarea
+              value={value}
+              onChange={(e) => handleCSVPaste(e.target.value)}
+              placeholder={input.placeholder}
+              className="w-full min-h-[200px] p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
+            />
+            <p className="mt-1 text-xs text-yellow-600 flex items-center gap-1">
+              ⭐ Much easier! Paste with headers in first row - we'll handle the formatting for you.
+            </p>
+          </div>
 
-            {/* Preview */}
-            {value && (
-              <div className="mt-4 p-3 bg-gray-50 rounded-md border">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-gray-700">Preview</span>
-                  <span className="text-xs text-gray-500">
-                    {Object.keys(JSON.parse(value) || {}).length} rows ready for processing
+          {/* Enhanced Preview */}
+          {value && headers.length > 0 && (
+            <div className="mt-4 p-4 bg-gray-50 rounded-md border">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-medium text-gray-700">Data Preview</span>
+                <div className="flex gap-4 text-xs text-gray-500">
+                  <span>📊 {headers.length} columns</span>
+                  <span>📋 {rows.length} data rows</span>
+                </div>
+              </div>
+              
+              {/* Headers */}
+              <div className="mb-2">
+                <div className="text-xs font-medium text-blue-600 mb-1">Headers:</div>
+                <div className="flex flex-wrap gap-1">
+                  {headers.map((header, index) => (
+                    <span key={index} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-medium">
+                      {header}
+                    </span>
+                  ))}
+                  <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-medium">
+                    + AI_Analysis
                   </span>
                 </div>
-                <div className="text-xs text-gray-600 max-h-20 overflow-y-auto">
-                  {Object.entries(JSON.parse(value) || {}).slice(0, 3).map(([key, valueArray]: [string, any]) => (
-                    <div key={key} className="truncate">
-                      • {Array.isArray(valueArray) ? valueArray[0] : valueArray}
-                    </div>
-                  ))}
-                  {Object.keys(JSON.parse(value) || {}).length > 3 && (
-                    <div className="text-gray-400">... and {Object.keys(JSON.parse(value) || {}).length - 3} more</div>
-                  )}
-                </div>
               </div>
-            )}
-          </div>
+              
+              {/* Sample Rows */}
+              {preview.length > 0 && (
+                <div>
+                  <div className="text-xs font-medium text-gray-600 mb-1">Sample Data Rows:</div>
+                  <div className="text-xs text-gray-600 space-y-1 max-h-20 overflow-y-auto">
+                    {preview.map((row, index) => (
+                      <div key={index} className="flex gap-2">
+                        <span className="text-gray-400">#{index + 1}:</span>
+                        <span>{row.slice(0, 3).join(' | ')}{row.length > 3 ? '...' : ''}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       );
     }
@@ -785,15 +823,15 @@ blockchain payment processor`}
             <Label htmlFor={input.id} className="text-sm font-medium">
               {input.label} {input.required && <span className="text-red-500">*</span>}
             </Label>
-            <Select
-              value={value}
+            <Select 
+              value={value} 
               onValueChange={(newValue) => handleInputChange(input.id, newValue)}
             >
               <SelectTrigger>
-                <SelectValue placeholder={input.placeholder} />
+                <SelectValue placeholder="Select an option" />
               </SelectTrigger>
               <SelectContent>
-                {input.options?.map((option: any) => (
+                {input.options?.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -803,6 +841,37 @@ blockchain payment processor`}
             {input.description && (
               <p className="text-xs text-gray-500">{input.description}</p>
             )}
+          </div>
+        );
+
+      case 'toggle':
+        return (
+          <div key={input.id} className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor={input.id} className="text-sm font-medium">
+                  {input.label} {input.required && <span className="text-red-500">*</span>}
+                </Label>
+                {input.description && <p className="text-sm text-gray-500 mt-1">{input.description}</p>}
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-600">All Rows</span>
+                <button
+                  type="button"
+                  onClick={() => handleInputChange(input.id, !formData[input.id])}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                    formData[input.id] ? 'bg-blue-600' : 'bg-gray-200'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                      formData[input.id] ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+                <span className="text-sm text-gray-600">Test (1 row)</span>
+              </div>
+            </div>
           </div>
         );
 
@@ -896,7 +965,7 @@ blockchain payment processor`}
     }
 
     // Special handling for Loop Over Rows - always show table format
-    if (workflow?.id === 'loop-over-rows' && results.results && Array.isArray(results.results)) {
+    if ((workflow?.id === '550e8400-e29b-41d4-a716-446655440001' || workflow?.id === 'loop-over-rows') && results && results.results && Array.isArray(results.results)) {
       // Create table data from results array
       const firstResult = results.results[0];
       const headers = firstResult ? Object.keys(firstResult).filter(key => key !== 'row_key') : [];
@@ -904,8 +973,8 @@ blockchain payment processor`}
       const tableData = {
         columns: headers.map((header) => ({
           key: header,
-          label: header.charAt(0).toUpperCase() + header.slice(1),
-          type: (header === 'score' ? 'number' : 'text') as 'number' | 'text' | 'status' | 'date' | 'currency' | 'email',
+          label: header === 'rationale' ? 'AI_Analysis' : header.charAt(0).toUpperCase() + header.slice(1),
+          type: 'text' as 'number' | 'text' | 'status' | 'date' | 'currency' | 'email',
           sortable: true
         })),
         rows: results.results.map((item, index) => ({
@@ -1073,6 +1142,37 @@ blockchain payment processor`}
       </div>
     );
   };
+
+  // Loading state with engaging animation
+  if (isExecuting) {
+    return (
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">Processing Your Data</h3>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="relative">
+                <div className="w-16 h-16 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-2xl">🤖</span>
+                </div>
+              </div>
+              <div className="mt-6 text-center">
+                <h4 className="text-lg font-medium text-gray-900 mb-2">AI is analyzing your data</h4>
+                <p className="text-sm text-gray-600 mb-4">
+                  Using Gemini 2.5-Flash to process {workflow?.name === 'Loop Over Rows - AI Batch Processing' && formData.test_mode ? 'your test row' : 'all rows'}
+                </p>
+                <div className="space-y-2">
+                  <div className="text-xs text-gray-500">⚡ Average processing time: 30-60 seconds</div>
+                  <div className="text-xs text-gray-500">🎯 {workflow?.name === 'Loop Over Rows - AI Batch Processing' && formData.test_mode ? 'Test mode: Processing 1 row' : 'Production mode: Processing all rows'}</div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

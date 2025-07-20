@@ -408,7 +408,7 @@ Original error: ${errorMessage}`);
       const text = inputs.text || '';
       const sentiments = ['positive', 'negative', 'neutral'];
       const randomSentiment = sentiments[Math.floor(Math.random() * sentiments.length)];
-      
+
       return {
         success: true,
         results: {
@@ -761,15 +761,15 @@ blockchain payment processor`}
             </Label>
             <div className="flex items-center space-x-3">
               <input
-                id={input.id}
-                type="range"
-                min={input.min}
-                max={input.max}
-                step={input.step}
+              id={input.id}
+              type="range"
+              min={input.min}
+              max={input.max}
+              step={input.step}
                 value={value}
                 onChange={(e) => handleInputChange(input.id, parseFloat(e.target.value))}
                 className="flex-1"
-              />
+            />
               <span className="text-sm font-medium w-12">{value}</span>
             </div>
             {input.description && (

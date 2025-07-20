@@ -1,406 +1,334 @@
 import React, { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import { 
-  ChevronLeft, 
-  ChevronRight,
-  Download,
-  Search,
-  Filter,
-  RefreshCw,
-  MoreHorizontal,
-  CheckCircle,
-  AlertCircle,
-  Clock
-} from 'lucide-react';
-
-export interface TableColumn {
-  key: string;
-  label: string;
-  type?: 'text' | 'number' | 'date' | 'boolean' | 'email' | 'url' | 'status' | 'currency';
-  width?: string;
-  sortable?: boolean;
-  filterable?: boolean;
-}
-
-export interface TableRow {
-  id: string | number;
-  [key: string]: any;
-}
+  DownloadIcon, 
+  ArrowUpIcon, 
+  ArrowDownIcon,
+  FileTextIcon,
+  TableIcon
+} from "lucide-react";
 
 export interface TableData {
-  columns: TableColumn[];
-  rows: TableRow[];
+  columns: Array<{
+    key: string;
+    label: string;
+    type: 'text' | 'number' | 'status' | 'date' | 'currency' | 'email';
+    sortable?: boolean;
+    filterable?: boolean;
+    width?: string;
+  }>;
+  rows: Array<Record<string, any>>;
   metadata?: {
     totalRows?: number;
-    source?: string;
-    lastUpdated?: string;
+    successfulRows?: number;
+    failedRows?: number;
     processingTime?: string;
-    successCount?: number;
-    errorCount?: number;
+    model?: string;
+    [key: string]: any;
   };
 }
 
 interface TableOutputProps {
   data: TableData;
   title?: string;
-  className?: string;
-  pageSize?: number;
   enableSearch?: boolean;
   enableExport?: boolean;
   enablePagination?: boolean;
+  pageSize?: number;
   maxHeight?: string;
 }
 
 export const TableOutput: React.FC<TableOutputProps> = ({
   data,
-  title = "Data Table",
-  className = "",
-  pageSize = 10,
+  title = "Results",
   enableSearch = true,
   enableExport = true,
   enablePagination = true,
-  maxHeight = "500px"
+  pageSize = 10,
+  maxHeight = "600px"
 }) => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
   const [sortColumn, setSortColumn] = useState<string | null>(null);
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(0);
 
-  // Filter and search data
-  const filteredData = useMemo(() => {
-    if (!searchTerm) return data.rows;
-    
-    return data.rows.filter(row =>
-      Object.values(row).some(value =>
-        value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    );
-  }, [data.rows, searchTerm]);
+  // Sort and filter data
+  const processedData = useMemo(() => {
+    let filtered = data.rows;
 
-  // Sort data
-  const sortedData = useMemo(() => {
-    if (!sortColumn) return filteredData;
-    
-    return [...filteredData].sort((a, b) => {
-      const aVal = a[sortColumn];
-      const bVal = b[sortColumn];
-      
-      // Handle different data types
-      if (typeof aVal === 'number' && typeof bVal === 'number') {
-        return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
-      }
-      
-      const aStr = aVal?.toString() || '';
-      const bStr = bVal?.toString() || '';
-      
-      if (sortDirection === 'asc') {
-        return aStr.localeCompare(bStr);
-      } else {
-        return bStr.localeCompare(aStr);
-      }
-    });
-  }, [filteredData, sortColumn, sortDirection]);
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter(row =>
+        Object.values(row).some(value =>
+          String(value).toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      );
+    }
 
-  // Paginate data
-  const paginatedData = useMemo(() => {
-    if (!enablePagination) return sortedData;
-    
-    const start = (currentPage - 1) * pageSize;
-    const end = start + pageSize;
-    return sortedData.slice(start, end);
-  }, [sortedData, currentPage, pageSize, enablePagination]);
+    // Apply sorting
+    if (sortColumn) {
+      filtered = [...filtered].sort((a, b) => {
+        const aVal = a[sortColumn];
+        const bVal = b[sortColumn];
+        
+        if (typeof aVal === 'number' && typeof bVal === 'number') {
+          return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+        }
+        
+        const aStr = String(aVal).toLowerCase();
+        const bStr = String(bVal).toLowerCase();
+        return sortDirection === 'asc' 
+          ? aStr.localeCompare(bStr)
+          : bStr.localeCompare(aStr);
+      });
+    }
 
-  const totalPages = Math.ceil(sortedData.length / pageSize);
+    return filtered;
+  }, [data.rows, searchTerm, sortColumn, sortDirection]);
+
+  // Pagination
+  const totalPages = Math.ceil(processedData.length / pageSize);
+  const paginatedData = enablePagination 
+    ? processedData.slice(currentPage * pageSize, (currentPage + 1) * pageSize)
+    : processedData;
 
   const handleSort = (columnKey: string) => {
-    const column = data.columns.find(col => col.key === columnKey);
-    if (!column?.sortable) return;
-
     if (sortColumn === columnKey) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
       setSortColumn(columnKey);
-      setSortDirection('asc');
+      setSortDirection('desc');
     }
   };
 
-  const formatCellValue = (value: any, column: TableColumn) => {
-    if (value === null || value === undefined) return '-';
-    
-    switch (column.type) {
-      case 'boolean':
-        return value ? '✓' : '✗';
-      case 'date':
-        return new Date(value).toLocaleDateString();
-      case 'email':
-        return (
-          <a href={`mailto:${value}`} className="text-blue-600 hover:underline">
-            {value}
-          </a>
-        );
-      case 'url':
-        return (
-          <a href={value} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-            {value.length > 30 ? `${value.substring(0, 30)}...` : value}
-          </a>
-        );
-      case 'currency':
-        if (typeof value === 'number') {
-          return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-        }
-        return `$${parseFloat(value || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-      case 'status':
-        const status = value.toLowerCase();
-        const statusColors = {
-          active: 'bg-green-100 text-green-800',
-          inactive: 'bg-gray-100 text-gray-800',
-          success: 'bg-green-100 text-green-800',
-          completed: 'bg-green-100 text-green-800',
-          error: 'bg-red-100 text-red-800',
-          failed: 'bg-red-100 text-red-800',
-          pending: 'bg-yellow-100 text-yellow-800',
-          processing: 'bg-blue-100 text-blue-800',
-          cancelled: 'bg-gray-100 text-gray-800',
-          draft: 'bg-blue-100 text-blue-800'
-        };
-        return (
-          <Badge className={statusColors[status] || 'bg-gray-100 text-gray-800'}>
-            {value}
-          </Badge>
-        );
-      case 'number':
-        if (typeof value === 'number') {
-          return value.toLocaleString();
-        }
-        return value;
-      default:
-        const str = value.toString();
-        return str.length > 50 ? `${str.substring(0, 50)}...` : str;
-    }
+  const getScoreColor = (score: number): string => {
+    if (score >= 90) return 'bg-green-100 text-green-800 border-green-200';
+    if (score >= 70) return 'bg-blue-100 text-blue-800 border-blue-200';
+    if (score >= 50) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    if (score >= 30) return 'bg-orange-100 text-orange-800 border-orange-200';
+    return 'bg-red-100 text-red-800 border-red-200';
   };
 
-  const exportToCSV = () => {
-    const headers = data.columns.map(col => col.label).join(',');
-    const csvRows = data.rows.map(row =>
-      data.columns.map(col => {
-        const value = row[col.key];
-        const str = value?.toString() || '';
-        return str.includes(',') ? `"${str.replace(/"/g, '""')}"` : str;
-      }).join(',')
-    );
-    
-    const csvContent = [headers, ...csvRows].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
+  const downloadJSON = () => {
+    const jsonData = {
+      title,
+      metadata: data.metadata,
+      results: processedData
+    };
+    const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${title.replace(/\s+/g, '_').toLowerCase()}_${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `${title.toLowerCase().replace(/\s+/g, '_')}_results.json`;
+    document.body.appendChild(a);
     a.click();
-    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'success':
-      case 'completed':
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case 'error':
-      case 'failed':
-        return <AlertCircle className="h-4 w-4 text-red-600" />;
-      case 'pending':
-      case 'processing':
-        return <Clock className="h-4 w-4 text-yellow-600" />;
-      default:
-        return null;
-    }
+  const downloadCSV = () => {
+    const headers = data.columns.map(col => col.label);
+    const rows = processedData.map(row => 
+      data.columns.map(col => {
+        const value = row[col.key];
+        // Escape quotes and wrap in quotes if contains comma/quote
+        const stringValue = String(value || '');
+        return stringValue.includes(',') || stringValue.includes('"') 
+          ? `"${stringValue.replace(/"/g, '""')}"` 
+          : stringValue;
+      })
+    );
+    
+    const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${title.toLowerCase().replace(/\s+/g, '_')}_results.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   return (
-    <Card className={`${className}`}>
+    <Card className="w-full">
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex justify-between items-start">
           <div>
-            <CardTitle className="flex items-center space-x-2">
-              <span>{title}</span>
-              {data.metadata?.source && (
-                <Badge variant="outline" className="text-xs">
-                  {data.metadata.source}
-                </Badge>
-              )}
-            </CardTitle>
+            <CardTitle className="text-xl font-semibold text-gray-900">{title}</CardTitle>
             {data.metadata && (
-              <div className="flex items-center space-x-4 text-sm text-gray-500 mt-2">
-                {data.metadata.totalRows && (
-                  <span>{data.metadata.totalRows.toLocaleString()} rows</span>
-                )}
-                {data.metadata.processingTime && (
-                  <span>Processed in {data.metadata.processingTime}</span>
-                )}
-                {data.metadata.lastUpdated && (
-                  <span>Updated {new Date(data.metadata.lastUpdated).toLocaleTimeString()}</span>
-                )}
-              </div>
+              <CardDescription className="mt-2">
+                <div className="flex flex-wrap gap-4 text-sm">
+                  {data.metadata.totalRows && (
+                    <span className="flex items-center gap-1">
+                      <TableIcon className="w-4 h-4" />
+                      {data.metadata.totalRows} total rows
+                    </span>
+                  )}
+                  {data.metadata.processingTime && (
+                    <span>⏱️ {data.metadata.processingTime}</span>
+                  )}
+                  {data.metadata.model && (
+                    <span>🤖 {data.metadata.model}</span>
+                  )}
+                </div>
+              </CardDescription>
             )}
           </div>
           
-          <div className="flex items-center space-x-2">
-            {enableSearch && (
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8 w-48"
-                />
-              </div>
-            )}
-            {enableExport && (
-              <Button variant="outline" size="sm" onClick={exportToCSV}>
-                <Download className="h-4 w-4 mr-1" />
-                Export CSV
+          {enableExport && (
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={downloadCSV}
+                className="flex items-center gap-2"
+              >
+                <DownloadIcon className="w-4 h-4" />
+                CSV
               </Button>
-            )}
-          </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={downloadJSON}
+                className="flex items-center gap-2"
+              >
+                <DownloadIcon className="w-4 h-4" />
+                JSON
+              </Button>
+            </div>
+          )}
         </div>
-
-        {/* Status Summary */}
-        {data.metadata && (data.metadata.successCount || data.metadata.errorCount) && (
-          <div className="flex items-center space-x-4 pt-2 border-t">
-            {data.metadata.successCount > 0 && (
-              <div className="flex items-center space-x-1 text-green-600">
-                <CheckCircle className="h-4 w-4" />
-                <span className="text-sm">{data.metadata.successCount} successful</span>
-              </div>
-            )}
-            {data.metadata.errorCount > 0 && (
-              <div className="flex items-center space-x-1 text-red-600">
-                <AlertCircle className="h-4 w-4" />
-                <span className="text-sm">{data.metadata.errorCount} errors</span>
-              </div>
-            )}
+        
+        {enableSearch && (
+          <div className="mt-4">
+            <input
+              type="text"
+              placeholder="Search results..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full max-w-md px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
           </div>
         )}
       </CardHeader>
-
-      <CardContent className="p-0">
-        <div style={{ maxHeight, overflowY: 'auto' }}>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                {data.columns.map((column) => (
-                  <TableHead 
-                    key={column.key}
-                    className={`${column.sortable ? 'cursor-pointer hover:bg-gray-50' : ''} ${column.width ? `w-${column.width}` : ''}`}
-                    onClick={() => column.sortable && handleSort(column.key)}
-                  >
-                    <div className="flex items-center space-x-1">
-                      <span>{column.label}</span>
-                      {column.sortable && sortColumn === column.key && (
-                        <span className="text-xs">
-                          {sortDirection === 'asc' ? '↑' : '↓'}
-                        </span>
-                      )}
-                    </div>
-                  </TableHead>
+      
+      <CardContent>
+        <div className="overflow-hidden border rounded-lg">
+          <div className="overflow-x-auto" style={{ maxHeight }}>
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b sticky top-0">
+                <tr>
+                  {data.columns.map((column) => (
+                    <th
+                      key={column.key}
+                      className={`px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${
+                        column.sortable !== false ? 'cursor-pointer hover:bg-gray-100' : ''
+                      }`}
+                      onClick={() => column.sortable !== false && handleSort(column.key)}
+                      style={{ width: column.width }}
+                    >
+                      <div className="flex items-center gap-1">
+                        {column.label}
+                        {column.sortable !== false && sortColumn === column.key && (
+                          sortDirection === 'asc' 
+                            ? <ArrowUpIcon className="w-3 h-3" />
+                            : <ArrowDownIcon className="w-3 h-3" />
+                        )}
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 bg-white">
+                {paginatedData.map((row, index) => (
+                  <tr key={row.id || index} className="hover:bg-gray-50">
+                    {data.columns.map((column) => {
+                      const value = row[column.key];
+                      
+                      return (
+                        <td key={column.key} className="px-4 py-3 text-sm">
+                          {column.key === 'score' && typeof value === 'number' ? (
+                            <Badge 
+                              variant="outline" 
+                              className={`font-semibold ${getScoreColor(value)}`}
+                            >
+                              {value}
+                            </Badge>
+                          ) : column.type === 'status' ? (
+                            <Badge 
+                              variant={value === 'processed' ? 'default' : 'destructive'}
+                            >
+                              {value}
+                            </Badge>
+                          ) : column.type === 'currency' && typeof value === 'number' ? (
+                            <span className="font-medium">
+                              ${value.toFixed(2)}
+                            </span>
+                          ) : column.key === 'rationale' ? (
+                            <div className="max-w-md">
+                              <p className="text-gray-700 leading-relaxed">
+                                {String(value || '')}
+                              </p>
+                            </div>
+                          ) : (
+                            <span className={column.type === 'number' ? 'font-medium' : ''}>
+                              {String(value || '')}
+                            </span>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
                 ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedData.length > 0 ? (
-                paginatedData.map((row, index) => (
-                  <TableRow key={row.id || index}>
-                    {data.columns.map((column) => (
-                      <TableCell key={column.key} className="py-2">
-                        <div className="flex items-center space-x-2">
-                          {column.type === 'status' && getStatusIcon(row[column.key])}
-                          <span>{formatCellValue(row[column.key], column)}</span>
-                        </div>
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={data.columns.length} className="text-center py-8 text-gray-500">
-                    {searchTerm ? 'No matching results found' : 'No data available'}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </tbody>
+            </table>
+          </div>
         </div>
-
-        {/* Pagination */}
+        
         {enablePagination && totalPages > 1 && (
-          <div className="flex items-center justify-between px-6 py-4 border-t">
-            <div className="text-sm text-gray-500">
-              Showing {Math.min((currentPage - 1) * pageSize + 1, sortedData.length)} to{' '}
-              {Math.min(currentPage * pageSize, sortedData.length)} of {sortedData.length} entries
-              {searchTerm && ` (filtered from ${data.rows.length} total)`}
-            </div>
-            
-            <div className="flex items-center space-x-2">
+          <div className="flex justify-between items-center mt-4">
+            <p className="text-sm text-gray-700">
+              Showing {currentPage * pageSize + 1} to {Math.min((currentPage + 1) * pageSize, processedData.length)} of {processedData.length} results
+            </p>
+            <div className="flex gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+                disabled={currentPage === 0}
               >
-                <ChevronLeft className="h-4 w-4" />
                 Previous
               </Button>
-              
-              <div className="flex items-center space-x-1">
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  const page = i + 1;
-                  return (
-                    <Button
-                      key={page}
-                      variant={currentPage === page ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setCurrentPage(page)}
-                      className="w-8 h-8 p-0"
-                    >
-                      {page}
-                    </Button>
-                  );
-                })}
-                {totalPages > 5 && (
-                  <>
-                    <span className="text-gray-400">...</span>
-                    <Button
-                      variant={currentPage === totalPages ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setCurrentPage(totalPages)}
-                      className="w-8 h-8 p-0"
-                    >
-                      {totalPages}
-                    </Button>
-                  </>
-                )}
-              </div>
-              
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
+                disabled={currentPage === totalPages - 1}
               >
                 Next
-                <ChevronRight className="h-4 w-4" />
               </Button>
+            </div>
+          </div>
+        )}
+        
+        {data.metadata && (data.metadata.successfulRows || data.metadata.failedRows) && (
+          <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+            <div className="text-sm text-gray-600">
+              <strong>Processing Summary:</strong>
+              {data.metadata.successfulRows && (
+                <span className="ml-2 text-green-600">
+                  ✅ {data.metadata.successfulRows} successful
+                </span>
+              )}
+              {data.metadata.failedRows && (
+                <span className="ml-2 text-red-600">
+                  ❌ {data.metadata.failedRows} failed
+                </span>
+              )}
             </div>
           </div>
         )}

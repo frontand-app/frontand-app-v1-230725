@@ -6,7 +6,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, Play, AlertCircle, Download } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Loader2, Play, AlertCircle, Upload, FileText } from 'lucide-react';
 import { TableOutput, TableData } from '@/components/TableOutput';
 
 const LoopOverRowsRunner: React.FC = () => {
@@ -17,6 +19,8 @@ const LoopOverRowsRunner: React.FC = () => {
   const [isExecuting, setIsExecuting] = useState(false);
   const [results, setResults] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [inputMethod, setInputMethod] = useState<'text' | 'file'>('text');
+  const [parsedData, setParsedData] = useState<{headers: string[], rows: string[][]} | null>(null);
 
   // Only render if this is the loop-over-rows workflow
   if (id !== 'loop-over-rows') {
@@ -32,9 +36,41 @@ const LoopOverRowsRunner: React.FC = () => {
     );
   }
 
+  const parseCSVData = (data: string) => {
+    const lines = data.trim().split('\n');
+    if (lines.length < 2) return null;
+    
+    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+    const rows = lines.slice(1).map(line => 
+      line.split(',').map(cell => cell.trim().replace(/"/g, ''))
+    );
+    
+    return { headers, rows };
+  };
+
+  const handleTextInput = (value: string) => {
+    setCsvData(value);
+    const parsed = parseCSVData(value);
+    setParsedData(parsed);
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.type === 'text/csv') {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target?.result as string;
+        setCsvData(content);
+        const parsed = parseCSVData(content);
+        setParsedData(parsed);
+      };
+      reader.readAsText(file);
+    }
+  };
+
   const handleExecute = async () => {
-    if (!csvData.trim()) {
-      setError('Please provide CSV data');
+    if (!csvData.trim() || !parsedData) {
+      setError('Please provide valid CSV data with headers');
       return;
     }
 
@@ -42,27 +78,36 @@ const LoopOverRowsRunner: React.FC = () => {
     setError(null);
 
     try {
+      // Format data for Modal API
+      const rowsToProcess = testMode ? parsedData.rows.slice(0, 1) : parsedData.rows;
+      
+      const requestData = {
+        data: csvData.trim(),
+        prompt: prompt.trim(),
+        test_mode: testMode
+      };
+
+      console.log('Sending request:', requestData);
+
       const response = await fetch('https://scaile--loop-over-rows-fastapi-app.modal.run/process', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          inputs: {
-            data: csvData,
-            prompt: prompt,
-            test_mode: testMode
-          }
-        })
+        body: JSON.stringify(requestData)
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error('API Error:', errorText);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
       }
 
       const result = await response.json();
+      console.log('API Response:', result);
       setResults(result);
     } catch (err: any) {
+      console.error('Execution error:', err);
       setError(err.message || 'Failed to execute workflow');
     } finally {
       setIsExecuting(false);
@@ -70,36 +115,85 @@ const LoopOverRowsRunner: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
+    <div className="container mx-auto px-4 py-8 max-w-7xl">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Input Section */}
+        {/* INPUT SECTION */}
         <div className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                🔄 Loop Over Rows - AI Batch Processing
+                📥 Input
               </CardTitle>
               <CardDescription>
-                Process CSV data with AI. Each row will be analyzed with your custom prompt.
+                🔄 Loop Over Rows - AI Batch Processing
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* CSV Data Input */}
-              <div className="space-y-2">
-                <Label htmlFor="csv-data">CSV Data (with headers)</Label>
-                <Textarea
-                  id="csv-data"
-                  placeholder={`Name,Email,Company
+              {/* Input Method Selector */}
+              <Tabs value={inputMethod} onValueChange={(value) => setInputMethod(value as 'text' | 'file')}>
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="text" className="flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    Paste CSV
+                  </TabsTrigger>
+                  <TabsTrigger value="file" className="flex items-center gap-2">
+                    <Upload className="w-4 h-4" />
+                    Upload CSV
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="text" className="space-y-2">
+                  <Label htmlFor="csv-data">CSV Data (with headers)</Label>
+                  <Textarea
+                    id="csv-data"
+                    placeholder={`Name,Email,Company
 John Doe,john@example.com,Tech Corp
 Jane Smith,jane@example.com,Innovation Inc`}
-                  value={csvData}
-                  onChange={(e) => setCsvData(e.target.value)}
-                  className="min-h-[120px] font-mono text-sm"
-                />
-                <p className="text-sm text-gray-600">
-                  Paste your CSV data including headers. First row should contain column names.
-                </p>
-              </div>
+                    value={csvData}
+                    onChange={(e) => handleTextInput(e.target.value)}
+                    className="min-h-[120px] font-mono text-sm"
+                  />
+                </TabsContent>
+                
+                <TabsContent value="file" className="space-y-2">
+                  <Label htmlFor="csv-file">Upload CSV File</Label>
+                  <Input
+                    id="csv-file"
+                    type="file"
+                    accept=".csv"
+                    onChange={handleFileUpload}
+                    className="cursor-pointer"
+                  />
+                </TabsContent>
+              </Tabs>
+
+              {/* Data Preview */}
+              {parsedData && (
+                <Card className="bg-gray-50">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm">Data Preview</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="space-y-2 text-sm">
+                      <div className="font-mono">
+                        <div className="font-semibold text-blue-600">
+                          Headers: {parsedData.headers.join(' | ')}
+                        </div>
+                        {parsedData.rows.slice(0, 2).map((row, idx) => (
+                          <div key={idx} className="text-gray-700">
+                            Row {idx + 1}: {row.join(' | ')}
+                          </div>
+                        ))}
+                        {parsedData.rows.length > 2 && (
+                          <div className="text-gray-500">
+                            ... and {parsedData.rows.length - 2} more rows
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Prompt Input */}
               <div className="space-y-2">
@@ -125,7 +219,7 @@ Jane Smith,jane@example.com,Innovation Inc`}
                     Test Mode
                   </Label>
                   <p className="text-sm text-gray-600">
-                    {testMode ? 'Process only 1 row' : 'Process all rows'}
+                    {testMode ? 'Process only 1 row' : `Process all ${parsedData?.rows.length || 0} rows`}
                   </p>
                 </div>
               </div>
@@ -133,7 +227,7 @@ Jane Smith,jane@example.com,Innovation Inc`}
               {/* Execute Button */}
               <Button
                 onClick={handleExecute}
-                disabled={isExecuting || !csvData.trim()}
+                disabled={isExecuting || !parsedData}
                 className="w-full bg-primary-500 hover:bg-primary-600 text-white"
                 size="lg"
               >
@@ -163,47 +257,60 @@ Jane Smith,jane@example.com,Innovation Inc`}
           </Card>
         </div>
 
-        {/* Results Section */}
+        {/* OUTPUT SECTION */}
         <div className="space-y-6">
-          {/* Loading State */}
-          {isExecuting && (
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex flex-col items-center justify-center py-8 space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                📤 Output
+              </CardTitle>
+              <CardDescription>
+                AI processing results will appear here
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Loading State */}
+              {isExecuting && (
+                <div className="flex flex-col items-center justify-center py-12 space-y-4">
                   <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
                   <div className="text-center">
                     <h3 className="font-semibold">Processing with Gemini 2.5-Flash</h3>
                     <p className="text-sm text-gray-600">
-                      {testMode ? 'Analyzing 1 row...' : 'Analyzing all rows...'}
+                      {testMode ? 'Analyzing 1 row...' : `Analyzing ${parsedData?.rows.length || 0} rows...`}
                     </p>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              )}
 
-          {/* Results Display */}
-          {results && results.results && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Results</CardTitle>
-                <CardDescription>
-                  Processed {Array.isArray(results.results) ? results.results.length : 1} row(s)
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <TableOutput data={{
-                  columns: Object.keys(results.results[0] || {}).map(key => ({
-                    key,
-                    label: key.charAt(0).toUpperCase() + key.slice(1),
-                    type: 'text' as const,
-                    sortable: true
-                  })),
-                  rows: Array.isArray(results.results) ? results.results : [results.results]
-                }} />
-              </CardContent>
-            </Card>
-          )}
+              {/* Results Display */}
+              {results && results.results && (
+                <div className="space-y-4">
+                  <div className="text-sm text-gray-600">
+                    ✅ Processed {Array.isArray(results.results) ? results.results.length : 1} row(s) successfully
+                  </div>
+                  <TableOutput data={{
+                    columns: Object.keys(results.results[0] || {}).map(key => ({
+                      key,
+                      label: key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' '),
+                      type: 'text' as const,
+                      sortable: true
+                    })),
+                    rows: Array.isArray(results.results) ? results.results : [results.results]
+                  }} />
+                </div>
+              )}
+
+              {/* Empty State */}
+              {!isExecuting && !results && (
+                <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+                  <div className="text-center">
+                    <p>No results yet</p>
+                    <p className="text-sm">Execute the workflow to see AI processing results</p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

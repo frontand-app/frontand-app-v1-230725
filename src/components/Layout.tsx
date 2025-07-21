@@ -9,10 +9,9 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
-import { Github, Menu, X, User, LogOut, Settings, CreditCard, BarChart3 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Github, Menu, X, User, LogOut, Settings, CreditCard } from "lucide-react";
+import { useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { CreditsService, UserProfile } from "@/lib/credits";
 
 interface LayoutProps {
   children: ReactNode;
@@ -20,23 +19,8 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const location = useLocation();
   const { user, signOut } = useAuth();
-
-  // Load user profile when user changes
-  useEffect(() => {
-    const loadUserProfile = async () => {
-      if (user) {
-        const profile = await CreditsService.getUserProfile(user);
-        setUserProfile(profile);
-      } else {
-        setUserProfile(null);
-      }
-    };
-    
-    loadUserProfile();
-  }, [user]);
 
   // V1 Simplified Navigation - focus on single workflow
   const navigation = [
@@ -113,13 +97,6 @@ const Layout = ({ children }: LayoutProps) => {
                         <p className="font-medium text-sm text-gray-900">
                           {user.email}
                         </p>
-                        <p className="text-xs text-gray-500">
-                          {userProfile ? (
-                            `${userProfile.tier.charAt(0).toUpperCase() + userProfile.tier.slice(1)} Plan • ${userProfile.credits_balance.toFixed(0)} credits`
-                          ) : (
-                            'Loading...'
-                          )}
-                        </p>
                       </div>
                     </div>
                     <DropdownMenuSeparator />
@@ -129,13 +106,6 @@ const Layout = ({ children }: LayoutProps) => {
                         Account Settings
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/billing" className="w-full cursor-pointer">
-                        <CreditCard className="w-4 h-4 mr-2" />
-                        Billing & Usage
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
                     <DropdownMenuItem 
                       onClick={handleSignOut}
                       className="w-full cursor-pointer text-red-600"

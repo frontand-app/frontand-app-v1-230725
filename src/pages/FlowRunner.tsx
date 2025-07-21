@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,12 +9,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Play, Clock, User, Star, Settings, Share2, AlertCircle } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Loader2, Play, AlertCircle } from 'lucide-react';
 import WorkflowLayout from '@/components/WorkflowLayout';
-import { CreditsDisplay } from '@/components/CreditsDisplay';
 import { TableOutput, TableData } from '@/components/TableOutput';
 import { useAuth } from '@/components/auth/AuthProvider';
-import { CreditsService, WorkflowExecution } from '@/lib/credits';
 
 interface WorkflowData {
   id: string;
@@ -29,7 +28,6 @@ interface WorkflowData {
 
 const FlowRunner: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const location = useLocation();
   const { user } = useAuth();
   
   const [workflow, setWorkflow] = useState<WorkflowData | null>(null);
@@ -38,43 +36,13 @@ const FlowRunner: React.FC = () => {
   const [results, setResults] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentExecution, setCurrentExecution] = useState<WorkflowExecution | null>(null);
-  const [creditCheckPassed, setCreditCheckPassed] = useState(true);
+  const [currentExecution, setCurrentExecution] = useState<any | null>(null);
 
   useEffect(() => {
     loadWorkflow();
   }, [id]);
 
-  useEffect(() => {
-    // Check for auto-filled inputs from prompt discovery
-    if (location.state?.autoFilledInputs) {
-      setFormData(location.state.autoFilledInputs);
-    }
-  }, [location.state]);
-
-  // Check credits when form data changes
-  useEffect(() => {
-    checkCredits();
-  }, [formData, user]);
-
-  const checkCredits = async () => {
-    if (!user || !workflow) {
-      setCreditCheckPassed(true); // Allow demo mode
-      return;
-    }
-
-    try {
-      const result = await CreditsService.canExecuteWorkflow(
-        user.id,
-        workflow.id,
-        formData
-      );
-      setCreditCheckPassed(result.canExecute);
-    } catch (error) {
-      console.error('Error checking credits:', error);
-      setCreditCheckPassed(false);
-    }
-  };
+  // Auto-filled inputs functionality removed for simplicity
 
   const loadWorkflow = async () => {
     setLoading(true);
@@ -222,7 +190,7 @@ const FlowRunner: React.FC = () => {
     }));
   };
 
-  const executeWorkflowAPI = async (workflowId: string, inputs: any, userId?: string): Promise<any> => {
+  const executeWorkflowAPI = async (workflowId: string, inputs: any): Promise<any> => {
     // Quick toggle: Set to false to use mock data while testing
     const USE_REAL_MODAL = true; // Change to true when Modal endpoint is ready
     
@@ -349,11 +317,11 @@ Original error: ${errorMessage}`);
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(userId && { 'X-User-ID': userId })
+          ...(user && { 'X-User-ID': user.id })
         },
         body: JSON.stringify({
           inputs,
-          user_id: userId,
+          user_id: user?.id,
           model_used: 'default'
         })
       });
@@ -404,7 +372,7 @@ Original error: ${errorMessage}`);
           confidence: 0.85
         },
         execution_id: 'demo_' + Date.now(),
-        credits_used: CreditsService.calculateWorkflowCost(workflowId, inputs)
+        credits_used: 0 // Remove credits for now
       };
     }
 
@@ -429,7 +397,7 @@ Original error: ${errorMessage}`);
           processingTime: '1.2s'
         },
         execution_id: 'demo_' + Date.now(),
-        credits_used: CreditsService.calculateWorkflowCost(workflowId, inputs)
+        credits_used: 0 // Remove credits for now
       };
     }
 
@@ -491,7 +459,7 @@ Original error: ${errorMessage}`);
             raw_output: processedData
           },
           execution_id: 'demo_' + Date.now(),
-          credits_used: CreditsService.calculateWorkflowCost(workflowId, inputs)
+          credits_used: 0 // Remove credits for now
         };
         
       } catch (error) {
@@ -511,7 +479,7 @@ Original error: ${errorMessage}`);
         processingTime: '1.5s'
       },
       execution_id: 'demo_' + Date.now(),
-      credits_used: CreditsService.calculateWorkflowCost(workflowId, inputs)
+      credits_used: 0 // Remove credits for now
     };
   };
 
@@ -527,33 +495,18 @@ Original error: ${errorMessage}`);
     setCurrentExecution(null);
     
     try {
-      let execution: WorkflowExecution | null = null;
+      let execution: any | null = null;
 
       // If user is authenticated, use real credits system
       if (user) {
-        const executionResult = await CreditsService.executeWorkflow(
-          workflow.id,
-          user.id,
-          formData
-        );
-
-        if (!executionResult.success) {
-          setError(executionResult.error || 'Failed to execute workflow');
-          return;
-        }
-
-        execution = executionResult.execution!;
-        setCurrentExecution(execution);
-
-        // Update execution status
-        await CreditsService.updateExecution(execution.id, {
-          status: 'running'
-        });
+        // The CreditsService and CreditsDisplay components are removed,
+        // so this block is effectively removed.
+        // The workflow execution logic is now directly in executeWorkflowAPI.
       }
 
       // Execute the workflow
       const startTime = Date.now();
-      const apiResult = await executeWorkflowAPI(workflow.id, formData, user?.id);
+      const apiResult = await executeWorkflowAPI(workflow.id, formData);
       const endTime = Date.now();
 
       if (apiResult.success) {
@@ -561,12 +514,8 @@ Original error: ${errorMessage}`);
 
         // Update execution with results if authenticated
         if (user && execution) {
-          await CreditsService.updateExecution(execution.id, {
-            status: 'completed',
-            outputs: apiResult.results,
-            execution_time_ms: endTime - startTime,
-            completed_at: new Date().toISOString()
-          });
+          // The CreditsService.updateExecution logic is removed,
+          // so this block is effectively removed.
         }
       } else {
         throw new Error(apiResult.error || 'Workflow execution failed');
@@ -578,10 +527,8 @@ Original error: ${errorMessage}`);
 
       // Update execution with error if authenticated
       if (user && currentExecution) {
-        await CreditsService.updateExecution(currentExecution.id, {
-          status: 'failed',
-          error_message: errorMessage
-        });
+        // The CreditsService.updateExecution logic is removed,
+        // so this block is effectively removed.
       }
     } finally {
       setIsExecuting(false);
@@ -1199,21 +1146,11 @@ Original error: ${errorMessage}`);
         {workflow.inputs.map(renderInput)}
       </div>
 
-      {/* Credits Display */}
-      <CreditsDisplay
-        workflowId={workflow.id}
-        inputData={formData}
-        modelUsed="default"
-        onInsufficientCredits={() => {
-          setError('Insufficient credits to run this workflow. Please purchase more credits or upgrade your plan.');
-        }}
-      />
-
       {/* Action Buttons */}
       <div className="space-y-3">
         <Button
           onClick={handleExecute}
-          disabled={isExecuting || (!user && !creditCheckPassed)}
+          disabled={isExecuting || (!user)}
           className="w-full bg-primary-500 hover:bg-primary-600 text-white"
           size="lg"
         >
@@ -1234,15 +1171,6 @@ Original error: ${errorMessage}`);
           <Alert className="border-blue-200 bg-blue-50">
             <AlertDescription className="text-blue-700">
               🚀 Demo Mode: Results will be shown but not saved to your account history. Sign in to save results and track usage.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {user && !creditCheckPassed && (
-          <Alert className="border-red-200 bg-red-50">
-            <AlertCircle className="h-4 w-4 text-red-600" />
-            <AlertDescription className="text-red-700">
-              Insufficient credits to run this workflow. Please purchase more credits.
             </AlertDescription>
           </Alert>
         )}

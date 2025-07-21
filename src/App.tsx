@@ -10,12 +10,10 @@ import FlowLibrary from "./pages/FlowLibrary";
 import FlowRunner from "./pages/FlowRunner";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
-import Billing from "./pages/Billing";
 import Documentation from "./pages/Documentation";
 import Analytics from "./pages/Analytics";
 import About from "./pages/About";
 import WorkflowCreator from "./pages/WorkflowCreator";
-import CreatorsDashboard from "./pages/CreatorsDashboard";
 import OAuthCallbackPage from "./pages/OAuthCallback";
 import Layout from "./components/Layout";
 import { AuthProvider } from "./components/auth/AuthProvider";
@@ -41,11 +39,9 @@ const App = () => (
               <Route path="/flows/:id" element={<FlowRunner />} />
               <Route path="/workflows/:id" element={<WorkflowRedirect />} />
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/billing" element={<Billing />} />
               <Route path="/docs" element={<Documentation />} />
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/about" element={<About />} />
-              <Route path="/creators" element={<CreatorsDashboard />} />
               <Route path="/creators/new" element={<WorkflowCreator />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/oauth/callback/:service" element={<OAuthCallbackPage />} />

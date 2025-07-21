@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import FlowLibrary from "./pages/FlowLibrary";
 import FlowRunner from "./pages/FlowRunner";
+import LoopOverRowsRunner from "./pages/FlowRunner-simple";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import Documentation from "./pages/Documentation";
@@ -25,6 +26,15 @@ const WorkflowRedirect = () => {
   return <Navigate to={`/flows/${id}`} replace />;
 };
 
+const FlowRunnerRoute = () => {
+  const { id } = useParams<{ id: string }>();
+  // Use simplified component for loop-over-rows to avoid React hook errors
+  if (id === 'loop-over-rows') {
+    return <LoopOverRowsRunner />;
+  }
+  return <FlowRunner />;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -36,7 +46,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/flows" element={<FlowLibrary />} />
-              <Route path="/flows/:id" element={<FlowRunner />} />
+              <Route path="/flows/:id" element={<FlowRunnerRoute />} />
               <Route path="/workflows/:id" element={<WorkflowRedirect />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/docs" element={<Documentation />} />

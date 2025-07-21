@@ -15,8 +15,8 @@ import os
 from datetime import datetime
 
 # Configuration
-URL = "https://frontand-app-v1-frontand-tech-persons-projects.vercel.app"
-SCREENSHOT_PATH = "deployment_check.png"
+URL = "https://frontand-app-v1-asc2.vercel.app/flows/loop-over-rows"
+SCREENSHOT_PATH = "loop_over_rows_check.png"
 
 def check_url_status():
     """Check if the URL is accessible"""
@@ -70,6 +70,16 @@ def take_screenshot():
         # Get current URL (might be redirected)
         current_url = driver.current_url
         print(f"📍 Current URL: {current_url}")
+        
+        # Check for JavaScript console errors
+        logs = driver.get_log('browser')
+        if logs:
+            print("🚨 JavaScript Console Errors:")
+            for log in logs:
+                if log['level'] in ['SEVERE', 'ERROR']:
+                    print(f"   ❌ {log['level']}: {log['message']}")
+        else:
+            print("✅ No JavaScript console errors")
         
         # Check if page has content
         try:

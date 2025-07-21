@@ -78,11 +78,21 @@ const LoopOverRowsRunner: React.FC = () => {
     setError(null);
 
     try {
-      // Format data for Modal API
+      // Format data for Modal API - convert CSV to structured format
       const rowsToProcess = testMode ? parsedData.rows.slice(0, 1) : parsedData.rows;
       
+      // Convert rows to array of objects
+      const dataObjects = rowsToProcess.map(row => {
+        const obj: Record<string, string> = {};
+        parsedData.headers.forEach((header, index) => {
+          obj[header] = row[index] || '';
+        });
+        return obj;
+      });
+      
       const requestData = {
-        data: csvData.trim(),
+        data: dataObjects,
+        headers: parsedData.headers,
         prompt: prompt.trim(),
         test_mode: testMode
       };
@@ -142,58 +152,68 @@ const LoopOverRowsRunner: React.FC = () => {
                   </TabsTrigger>
                 </TabsList>
                 
-                <TabsContent value="text" className="space-y-2">
-                  <Label htmlFor="csv-data">CSV Data (with headers)</Label>
-                  <Textarea
-                    id="csv-data"
-                    placeholder={`Name,Email,Company
+                {/* Static height container to prevent jumping */}
+                <div className="min-h-[160px]">
+                  <TabsContent value="text" className="space-y-2 mt-4">
+                    <Label htmlFor="csv-data">CSV Data (with headers)</Label>
+                    <Textarea
+                      id="csv-data"
+                      placeholder={`Name,Email,Company
 John Doe,john@example.com,Tech Corp
 Jane Smith,jane@example.com,Innovation Inc`}
-                    value={csvData}
-                    onChange={(e) => handleTextInput(e.target.value)}
-                    className="min-h-[120px] font-mono text-sm"
-                  />
-                </TabsContent>
-                
-                <TabsContent value="file" className="space-y-2">
-                  <Label htmlFor="csv-file">Upload CSV File</Label>
-                  <Input
-                    id="csv-file"
-                    type="file"
-                    accept=".csv"
-                    onChange={handleFileUpload}
-                    className="cursor-pointer"
-                  />
-                </TabsContent>
+                      value={csvData}
+                      onChange={(e) => handleTextInput(e.target.value)}
+                      className="min-h-[120px] font-mono text-sm"
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="file" className="space-y-2 mt-4">
+                    <Label htmlFor="csv-file">Upload CSV File</Label>
+                    <Input
+                      id="csv-file"
+                      type="file"
+                      accept=".csv"
+                      onChange={handleFileUpload}
+                      className="cursor-pointer"
+                    />
+                    {csvData && (
+                      <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
+                        <span className="text-green-600">✓</span> File loaded successfully
+                      </div>
+                    )}
+                  </TabsContent>
+                </div>
               </Tabs>
 
-              {/* Data Preview */}
-              {parsedData && (
-                <Card className="bg-gray-50">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm">Data Preview</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="space-y-2 text-sm">
-                      <div className="font-mono">
-                        <div className="font-semibold text-blue-600">
-                          Headers: {parsedData.headers.join(' | ')}
+              {/* Data Preview - Static height container */}
+              <div className="min-h-[120px]">
+                {parsedData && (
+                  <Card className="bg-gray-50">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm">Data Preview</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div className="space-y-2 text-sm">
+                        <div className="font-mono">
+                          <div className="font-semibold text-blue-600">
+                            Headers: {parsedData.headers.join(' | ')}
+                          </div>
+                          {parsedData.rows.slice(0, 2).map((row, idx) => (
+                            <div key={idx} className="text-gray-700">
+                              Row {idx + 1}: {row.join(' | ')}
+                            </div>
+                          ))}
+                          {parsedData.rows.length > 2 && (
+                            <div className="text-gray-500">
+                              ... and {parsedData.rows.length - 2} more rows
+                            </div>
+                          )}
                         </div>
-                        {parsedData.rows.slice(0, 2).map((row, idx) => (
-                          <div key={idx} className="text-gray-700">
-                            Row {idx + 1}: {row.join(' | ')}
-                          </div>
-                        ))}
-                        {parsedData.rows.length > 2 && (
-                          <div className="text-gray-500">
-                            ... and {parsedData.rows.length - 2} more rows
-                          </div>
-                        )}
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
 
               {/* Prompt Input */}
               <div className="space-y-2">

@@ -254,8 +254,8 @@ export const TableOutput: React.FC<TableOutputProps> = ({
                               ${value.toFixed(2)}
                             </span>
                           ) : column.key === 'rationale' ? (
-                            <div className="max-w-md">
-                              <p className="text-gray-700 leading-relaxed">
+                            <div className="max-w-lg min-w-0">
+                              <p className="text-gray-700 leading-relaxed text-sm whitespace-normal break-words">
                                 {String(value || '')}
                               </p>
                             </div>

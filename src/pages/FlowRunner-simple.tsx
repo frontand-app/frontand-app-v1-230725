@@ -78,23 +78,25 @@ const LoopOverRowsRunner: React.FC = () => {
     setError(null);
 
     try {
-      // Format data for Modal API - convert CSV to structured format
+      // Format data for Modal API - convert CSV to row-keyed dictionary format
       const rowsToProcess = testMode ? parsedData.rows.slice(0, 1) : parsedData.rows;
       
-      // Convert rows to array of objects
-      const dataObjects = rowsToProcess.map(row => {
-        const obj: Record<string, string> = {};
-        parsedData.headers.forEach((header, index) => {
-          obj[header] = row[index] || '';
+      // Convert rows to row-keyed dictionary format as expected by Modal
+      const dataDict: Record<string, Record<string, string>> = {};
+      rowsToProcess.forEach((row, index) => {
+        const rowKey = `row_${index + 1}`;
+        const rowObj: Record<string, string> = {};
+        parsedData.headers.forEach((header, headerIndex) => {
+          rowObj[header] = row[headerIndex] || '';
         });
-        return obj;
+        dataDict[rowKey] = rowObj;
       });
       
       const requestData = {
-        data: dataObjects,
+        data: dataDict,
         headers: parsedData.headers,
         prompt: prompt.trim(),
-        test_mode: testMode
+        batch_size: 10
       };
 
       console.log('Sending request:', requestData);

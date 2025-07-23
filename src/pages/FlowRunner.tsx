@@ -224,7 +224,8 @@ const FlowRunner: React.FC = () => {
             data: modalData,
             headers: headers,
             prompt: inputs.prompt,
-            batch_size: inputs.test_mode ? 1 : 10
+            batch_size: inputs.test_mode ? 1 : 10,
+            enable_google_search: inputs.enable_google_search || false
           })
         });
 

@@ -17,19 +17,19 @@ export const SignUpForm = () => {
       <CardContent className="space-y-4">
         <div>
           <Label htmlFor="email">Email</Label>
-          <Input 
-            id="email" 
-            type="email" 
-            value={email}
+              <Input
+                id="email"
+                type="email"
+                value={email}
             onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
+              />
+            </div>
         <div>
           <Label htmlFor="password">Password</Label>
-          <Input 
-            id="password" 
+              <Input
+                id="password"
             type="password" 
-            value={password}
+                value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>

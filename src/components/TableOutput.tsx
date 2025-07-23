@@ -12,11 +12,11 @@ import {
 
 export interface TableData {
   columns: Array<{
-    key: string;
-    label: string;
+  key: string;
+  label: string;
     type: 'text' | 'number' | 'status' | 'date' | 'currency' | 'email';
-    sortable?: boolean;
-    filterable?: boolean;
+  sortable?: boolean;
+  filterable?: boolean;
     width?: string;
   }>;
   rows: Array<Record<string, any>>;
@@ -61,7 +61,7 @@ export const TableOutput: React.FC<TableOutputProps> = ({
     // Apply search filter
     if (searchTerm) {
       filtered = filtered.filter(row =>
-        Object.values(row).some(value =>
+      Object.values(row).some(value =>
           String(value).toLowerCase().includes(searchTerm.toLowerCase())
         )
       );
@@ -70,13 +70,13 @@ export const TableOutput: React.FC<TableOutputProps> = ({
     // Apply sorting
     if (sortColumn) {
       filtered = [...filtered].sort((a, b) => {
-        const aVal = a[sortColumn];
-        const bVal = b[sortColumn];
-        
-        if (typeof aVal === 'number' && typeof bVal === 'number') {
-          return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
-        }
-        
+      const aVal = a[sortColumn];
+      const bVal = b[sortColumn];
+      
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+      }
+      
         const aStr = String(aVal).toLowerCase();
         const bStr = String(bVal).toLowerCase();
         return sortDirection === 'asc' 
@@ -154,24 +154,24 @@ export const TableOutput: React.FC<TableOutputProps> = ({
             {data.metadata && (
               <CardDescription className="mt-2">
                 <div className="flex flex-wrap gap-4 text-sm">
-                  {data.metadata.totalRows && (
+                {data.metadata.totalRows && (
                     <span className="flex items-center gap-1">
                       <TableIcon className="w-4 h-4" />
                       {data.metadata.totalRows} total rows
                     </span>
-                  )}
-                  {data.metadata.processingTime && (
+                )}
+                {data.metadata.processingTime && (
                     <span>⏱️ {data.metadata.processingTime}</span>
-                  )}
+                )}
                   {data.metadata.model && (
                     <span>🤖 {data.metadata.model}</span>
-                  )}
-                </div>
+                )}
+              </div>
               </CardDescription>
             )}
           </div>
           
-          {enableExport && (
+            {enableExport && (
             <div className="flex gap-2">
               <Button 
                 variant="outline" 
@@ -192,9 +192,9 @@ export const TableOutput: React.FC<TableOutputProps> = ({
                 JSON
               </Button>
             </div>
-          )}
+            )}
         </div>
-        
+
         {enableSearch && (
           <div className="mt-4">
             <input
@@ -207,16 +207,16 @@ export const TableOutput: React.FC<TableOutputProps> = ({
           </div>
         )}
       </CardHeader>
-      
+
       <CardContent>
         <div className="overflow-hidden border rounded-lg">
           <div className="overflow-x-auto" style={{ maxHeight }}>
             <table className="w-full">
               <thead className="bg-gray-50 border-b sticky top-0">
                 <tr>
-                  {data.columns.map((column) => (
+                {data.columns.map((column) => (
                     <th
-                      key={column.key}
+                    key={column.key}
                       className={`px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${
                         column.sortable !== false ? 'cursor-pointer hover:bg-gray-100' : ''
                       }`}
@@ -262,8 +262,8 @@ export const TableOutput: React.FC<TableOutputProps> = ({
                           ) : (
                             <span className={column.type === 'number' ? 'font-medium' : ''}>
                               {String(value || '')}
-                            </span>
-                          )}
+                        </span>
+                      )}
                         </td>
                       );
                     })}
@@ -271,9 +271,9 @@ export const TableOutput: React.FC<TableOutputProps> = ({
                 ))}
               </tbody>
             </table>
-          </div>
+                        </div>
         </div>
-        
+
         {enablePagination && totalPages > 1 && (
           <div className="flex justify-between items-center mt-4">
             <p className="text-sm text-gray-700">

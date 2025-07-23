@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Play, AlertCircle, Upload, FileText } from 'lucide-react';
+import { Loader2, Play, AlertCircle, Upload, FileText, Search, Globe } from 'lucide-react';
 import { TableOutput, TableData } from '@/components/TableOutput';
 
 const LoopOverRowsRunner: React.FC = () => {
@@ -16,6 +16,7 @@ const LoopOverRowsRunner: React.FC = () => {
   const [csvData, setCsvData] = useState('');
   const [prompt, setPrompt] = useState('Analyze this data and provide insights');
   const [testMode, setTestMode] = useState(true);
+  const [enableGoogleSearch, setEnableGoogleSearch] = useState(false);  // NEW: Google Search toggle
   const [isExecuting, setIsExecuting] = useState(false);
   const [results, setResults] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -96,7 +97,8 @@ const LoopOverRowsRunner: React.FC = () => {
         data: dataDict,
         headers: parsedData.headers,
         prompt: prompt.trim(),
-        batch_size: 10
+        batch_size: 10,
+        enable_google_search: enableGoogleSearch  // NEW: Send Google Search toggle
       };
 
       console.log('Sending request:', requestData);
@@ -137,7 +139,7 @@ const LoopOverRowsRunner: React.FC = () => {
                 📥 Input
               </CardTitle>
               <CardDescription>
-                🔄 Loop Over Rows - AI Batch Processing
+                🔄 Loop Over Rows - AI Batch Processing with Smart Columns
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -222,27 +224,54 @@ Jane Smith,jane@example.com,Innovation Inc`}
                 <Label htmlFor="prompt">AI Processing Prompt</Label>
                 <Textarea
                   id="prompt"
-                  placeholder="Analyze this data and provide insights about the person's role and company"
+                  placeholder="Find the website URL for this company"
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   className="min-h-[80px]"
                 />
+                <p className="text-xs text-gray-500">
+                  💡 Column name will be automatically generated based on your prompt
+                </p>
               </div>
 
-              {/* Test Mode Toggle */}
-              <div className="flex items-center space-x-3">
-                <Switch
-                  id="test-mode"
-                  checked={testMode}
-                  onCheckedChange={setTestMode}
-                />
-                <div>
-                  <Label htmlFor="test-mode" className="text-sm font-medium">
-                    Test Mode
-                  </Label>
-                  <p className="text-sm text-gray-600">
-                    {testMode ? 'Process only 1 row' : `Process all ${parsedData?.rows.length || 0} rows`}
-                  </p>
+              {/* Toggle Controls */}
+              <div className="space-y-4">
+                {/* Test Mode Toggle */}
+                <div className="flex items-center space-x-3">
+                  <Switch
+                    id="test-mode"
+                    checked={testMode}
+                    onCheckedChange={setTestMode}
+                  />
+                  <div>
+                    <Label htmlFor="test-mode" className="text-sm font-medium">
+                      Test Mode
+                    </Label>
+                    <p className="text-sm text-gray-600">
+                      {testMode ? 'Process only 1 row' : `Process all ${parsedData?.rows.length || 0} rows`}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Google Search Toggle - NEW */}
+                <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <Switch
+                    id="google-search"
+                    checked={enableGoogleSearch}
+                    onCheckedChange={setEnableGoogleSearch}
+                  />
+                  <div className="flex-1">
+                    <Label htmlFor="google-search" className="text-sm font-medium flex items-center gap-2">
+                      <Globe className="w-4 h-4 text-blue-600" />
+                      Google Search
+                    </Label>
+                    <p className="text-sm text-gray-600">
+                      {enableGoogleSearch 
+                        ? '🌐 AI can search the web for up-to-date information' 
+                        : '🔒 AI will use only its training data'
+                      }
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -256,12 +285,13 @@ Jane Smith,jane@example.com,Innovation Inc`}
                 {isExecuting ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Processing...
+                    Processing {enableGoogleSearch ? 'with Google Search' : ''}...
                   </>
                 ) : (
                   <>
                     <Play className="w-4 h-4 mr-2" />
                     Execute Workflow
+                    {enableGoogleSearch && <Search className="w-4 h-4 ml-2" />}
                   </>
                 )}
               </Button>
@@ -287,7 +317,7 @@ Jane Smith,jane@example.com,Innovation Inc`}
                 📤 Output
               </CardTitle>
               <CardDescription>
-                AI processing results will appear here
+                AI processing results with smart column names
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -296,10 +326,18 @@ Jane Smith,jane@example.com,Innovation Inc`}
                 <div className="flex flex-col items-center justify-center py-12 space-y-4">
                   <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
                   <div className="text-center">
-                    <h3 className="font-semibold">Processing with Gemini 2.5-Flash</h3>
+                    <h3 className="font-semibold">
+                      Processing with Gemini 2.5-Flash
+                      {enableGoogleSearch && <span className="text-blue-600"> + Google Search</span>}
+                    </h3>
                     <p className="text-sm text-gray-600">
                       {testMode ? 'Analyzing 1 row...' : `Analyzing ${parsedData?.rows.length || 0} rows...`}
                     </p>
+                    {enableGoogleSearch && (
+                      <p className="text-xs text-blue-600 mt-1">
+                        🌐 AI can search the web for latest information
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
@@ -307,13 +345,23 @@ Jane Smith,jane@example.com,Innovation Inc`}
               {/* Results Display */}
               {results && results.results && (
                 <div className="space-y-4">
-                  <div className="text-sm text-gray-600">
-                    ✅ Processed {Array.isArray(results.results) ? results.results.length : 1} row(s) successfully
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="text-gray-600">
+                      ✅ Processed {Array.isArray(results.results) ? results.results.length : 1} row(s) successfully
+                    </div>
+                    {results.output_column_name && (
+                      <div className="text-blue-600 font-medium">
+                        Output: {results.output_column_name}
+                      </div>
+                    )}
                   </div>
+                  
                   <TableOutput data={{
                     columns: Object.keys(results.results[0] || {}).map(key => ({
                       key,
-                      label: key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' '),
+                      label: key === results.output_column_name 
+                        ? results.output_column_name.replace(/_/g, ' ')
+                        : key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' '),
                       type: 'text' as const,
                       sortable: true
                     })),
@@ -339,4 +387,4 @@ Jane Smith,jane@example.com,Innovation Inc`}
   );
 };
 
-export default LoopOverRowsRunner; 
+export default LoopOverRowsRunner;

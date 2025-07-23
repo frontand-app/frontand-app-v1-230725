@@ -5,7 +5,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 
-url = "https://frontand-app-v1-clean-3gaoytkqy-frontand-tech-persons-projects.vercel.app/flows/loop-over-rows"
+url = "https://frontand-app-v1-clean-50qt0bjx1-frontand-tech-persons-projects.vercel.app/flows/loop-over-rows"
 
 print(f"🔍 Verifying CLEAN deployment: {url}")
 

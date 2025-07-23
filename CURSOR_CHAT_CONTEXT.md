@@ -6,7 +6,7 @@
 
 ### **Current Status: V1 Clean Baseline**
 - **GitHub**: `frontand-app/frontand-app-v1-230725` 
-- **Live URL**: https://frontand-app-v1-230725.vercel.app/
+- **Live URL**: https://frontand-app-v1-clean-50qt0bjx1-frontand-tech-persons-projects.vercel.app/
 - **Status**: ✅ Fully functional, auto-deploys from GitHub
 - **Key Feature**: Google Search toggle working correctly
 
@@ -15,7 +15,7 @@
 ## 🌐 **Deployment History & URLs**
 
 ### **Current Clean Deployment**
-- **Primary**: https://frontand-app-v1-230725.vercel.app/
+- **Primary**: https://frontand-app-v1-clean-50qt0bjx1-frontand-tech-persons-projects.vercel.app/
 - **Status**: ✅ Active, auto-deploys from GitHub master branch
 - **Features**: Google Search toggle, CSV upload, AI processing
 
@@ -166,7 +166,7 @@ vercel --force --prod
 
 ### **Current working state:**
 - ✅ **Repository**: Clean, connected to Vercel, auto-deploys
-- ✅ **Deployment**: Live and functional at frontand-app-v1-230725.vercel.app
+- ✅ **Deployment**: Live and functional at frontand-app-v1-clean-50qt0bjx1-frontand-tech-persons-projects.vercel.app
 - ✅ **Google Search**: Toggle visible and working correctly
 - ✅ **Documentation**: Complete project context and version roadmap
 - ✅ **Legacy Code**: Safely backed up in dedicated branch
@@ -182,7 +182,7 @@ vercel --force --prod
 ## 📞 **Key Resources**
 
 ### **URLs**
-- **Live App**: https://frontand-app-v1-230725.vercel.app/
+- **Live App**: https://frontand-app-v1-clean-50qt0bjx1-frontand-tech-persons-projects.vercel.app/
 - **GitHub**: https://github.com/frontand-app/frontand-app-v1-230725
 - **Vercel Dashboard**: https://vercel.com/frontand-app/frontand-app-v1-230725
 

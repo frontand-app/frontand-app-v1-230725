@@ -5,7 +5,7 @@
 
 ## 🎯 **Current Status: V1 Clean Baseline**
 - **Repository**: `frontand-app/frontand-app-v1-230725`
-- **Live URL**: https://frontand-app-v1-230725.vercel.app/
+- **Live URL**: https://frontand-app-v1-clean-50qt0bjx1-frontand-tech-persons-projects.vercel.app/
 - **Status**: ✅ Production Ready
 - **Strategy**: Clean foundation for future development
 
@@ -32,7 +32,7 @@
 - Vercel hosting with auto-deploy
 
 **Deployment URLs**:
-- **Primary**: https://frontand-app-v1-230725.vercel.app/
+- **Primary**: https://frontand-app-v1-clean-50qt0bjx1-frontand-tech-persons-projects.vercel.app/
 - **Repository**: https://github.com/frontand-app/frontand-app-v1-230725
 
 **Key Achievement**: Established clean, working baseline with Google Search toggle functioning correctly

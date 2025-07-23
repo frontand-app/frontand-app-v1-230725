@@ -15,7 +15,7 @@ import os
 from datetime import datetime
 
 # Configuration
-URL = "https://frontand-app-v1-asc2.vercel.app/flows/loop-over-rows"
+URL = "https://frontand-app-v1-clean-50qt0bjx1-frontand-tech-persons-projects.vercel.app/flows/loop-over-rows"
 SCREENSHOT_PATH = "loop_over_rows_check.png"
 
 def check_url_status():

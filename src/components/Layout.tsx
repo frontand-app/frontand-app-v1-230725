@@ -83,7 +83,7 @@ const Layout = ({ children }: LayoutProps) => {
             <div className="hidden md:flex items-center space-x-4">
               <Button variant="ghost" size="sm" asChild>
                 <a
-                  href="https://github.com/frontand-app/frontand-app-v1-clean"
+                  href="https://github.com/frontand-app/frontand-platform"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
@@ -218,8 +218,16 @@ const Layout = ({ children }: LayoutProps) => {
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="flex items-center space-x-4">
               <Link to="/" className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">F&</span>
+                <div className="relative">
+                  {/* Minimalist & Symbol */}
+                  <div className="w-8 h-8 flex items-center justify-center">
+                    <span className="text-2xl font-bold text-gray-800">&</span>
+                  </div>
+                  {/* Subtle connection dots */}
+                  <div className="absolute -top-1 -right-1 w-2 h-2">
+                    <div className="w-1 h-1 bg-gray-400 rounded-full absolute top-0 left-0"></div>
+                    <div className="w-1 h-1 bg-gray-300 rounded-full absolute top-1 left-1"></div>
+                  </div>
                 </div>
                 <span className="font-bold text-gray-900">Front&</span>
               </Link>
@@ -227,10 +235,10 @@ const Layout = ({ children }: LayoutProps) => {
             </div>
             
             <div className="flex items-center space-x-6 text-sm text-gray-600">
-              <a href="https://github.com/frontand-app/frontand-app-v1-clean" target="_blank" rel="noopener noreferrer" className="hover:text-gray-900">
+              <a href="https://github.com/frontand-app/frontand-platform" target="_blank" rel="noopener noreferrer" className="hover:text-gray-900">
                 GitHub
               </a>
-                              <span>© 2025 Front&</span>
+              <span>© 2025 Front&</span>
             </div>
           </div>
         </div>

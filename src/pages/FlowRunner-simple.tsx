@@ -905,7 +905,7 @@ Mike Johnson,mike@example.com,StartupXYZ`}
                         );
                       })()}
                       <p className="text-xs">🧠 Powered by Gemini 2.5 Flash {enableGoogleSearch && '+ Real-time Web Search'}</p>
-                    </div>
+                  </div>
                 </div>
               )}
 

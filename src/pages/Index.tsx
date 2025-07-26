@@ -36,32 +36,32 @@ const Index = () => {
             <Sparkles className="w-3 h-3" />
             <span>Front& - Universal Cloud App Frontend</span>
           </div>
-          
+            
           {/* Main Headline */}
           <h1 className="text-4xl lg:text-6xl font-semibold text-gray-900 mb-6 leading-tight">
             One frontend,<br />
             infinite cloud apps
-          </h1>
-          
+            </h1>
+            
           {/* Subheadline */}
           <p className="text-lg lg:text-xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
             Connect any data source to any cloud app with AI-powered workflows. 
             Start with Loop Over Rows, scale to everything.
-          </p>
+            </p>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 justify-center mb-16">
-            <Button 
-              size="lg" 
+              <Button 
+                size="lg" 
               className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 text-base"
-              asChild
-            >
-              <Link to="/flows/loop-over-rows">
+                asChild
+              >
+                <Link to="/flows/loop-over-rows">
                 <PlayCircle className="mr-2 w-4 h-4" />
                 Try Loop Over Rows
                 <ArrowRight className="ml-2 w-4 h-4" />
-              </Link>
-            </Button>
+                </Link>
+              </Button>
           </div>
 
           {/* Stats Row */}
@@ -121,8 +121,8 @@ const Index = () => {
                             )}
                           </div>
                         </div>
-                      </div>
-                    </div>
+                </div>
+              </div>
                     
                     <CardDescription className="text-gray-600 text-sm leading-relaxed">
                       {workflow.description}
@@ -135,9 +135,9 @@ const Index = () => {
                         <span key={templateIndex} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
                           {template.title}
                         </span>
-                      ))}
-                    </div>
-                    
+            ))}
+          </div>
+
                     {isLive ? (
                       <Button 
                         asChild 
@@ -158,7 +158,7 @@ const Index = () => {
                       >
                         <Clock className="mr-2 w-4 h-4" />
                         Coming Soon
-                      </Button>
+            </Button>
                     )}
                   </CardContent>
                 </Card>
@@ -223,17 +223,17 @@ const Index = () => {
           <p className="text-base text-gray-600 mb-8">
             Try our first workflow and see how AI can transform your data processing.
           </p>
-          <Button 
-            size="lg" 
+            <Button 
+              size="lg" 
             className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3"
-            asChild
-          >
-            <Link to="/flows/loop-over-rows">
+              asChild
+            >
+              <Link to="/flows/loop-over-rows">
               <PlayCircle className="mr-2 w-4 h-4" />
               Start with Loop Over Rows
               <ArrowRight className="ml-2 w-4 h-4" />
-            </Link>
-          </Button>
+              </Link>
+            </Button>
         </div>
       </section>
     </div>

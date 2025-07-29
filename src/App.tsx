@@ -15,6 +15,9 @@ import Analytics from "./pages/Analytics";
 import About from "./pages/About";
 import WorkflowCreator from "./pages/WorkflowCreator";
 import OAuthCallbackPage from "./pages/OAuthCallback";
+import Developer from "./pages/Developer";
+import ExecutionDashboard from "./pages/ExecutionDashboard";
+import Search from "./pages/Search";
 import Layout from "./components/Layout";
 import { AuthProvider } from "./components/auth/AuthProvider";
 
@@ -41,6 +44,9 @@ const App = () => (
               <Route path="/flows/:id" element={<WorkflowRunner />} />
               <Route path="/workflows/:id" element={<WorkflowRedirect />} />
               <Route path="/dashboard" element={<Dashboard />} />
+                            <Route path="/executions" element={<ExecutionDashboard />} />
+            <Route path="/developer" element={<Developer />} />
+            <Route path="/search" element={<Search />} />
               <Route path="/docs" element={<Documentation />} />
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/about" element={<About />} />

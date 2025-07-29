@@ -78,7 +78,67 @@ Mike Chen,mike@startupxyz.com,StartupXYZ,startupxyz.com`
     },
     
     outputType: 'table',
-    downloadable: true
+    downloadable: true,
+    
+    visualExplanation: {
+      title: 'How Loop Over Rows Works',
+      overview: 'Process each row of your CSV data with custom AI prompts. Perfect for analyzing large datasets, qualifying leads, or extracting insights from structured data.',
+      estimatedTime: '2-10 minutes',
+      complexity: 'easy',
+      steps: [
+        {
+          step: 1,
+          title: 'Upload CSV Data',
+          description: 'Upload your CSV file with the data you want to process',
+          icon: 'upload',
+          type: 'input',
+          example: 'company_list.csv with columns: company_name, website, industry',
+          details: 'Supports CSV files up to 25MB with any number of columns and rows'
+        },
+        {
+          step: 2,
+          title: 'Define AI Prompt',
+          description: 'Tell the AI exactly what analysis to perform on each row',
+          icon: 'settings',
+          type: 'config',
+          example: '"Analyze this company\'s website and determine their primary business focus and target market"',
+          details: 'Be specific about what you want the AI to extract or analyze from each data row'
+        },
+        {
+          step: 3,
+          title: 'AI Processing',
+          description: 'Our AI processes each row individually using advanced language models',
+          icon: 'cpu',
+          type: 'processing',
+          example: 'Row 1: Apple Inc. → "Consumer electronics and software, targeting mainstream consumers"',
+          details: 'Processing time: ~5-10 seconds per row depending on complexity'
+        },
+        {
+          step: 4,
+          title: 'Enhanced Results',
+          description: 'Download your original data enriched with AI-generated insights',
+          icon: 'download',
+          type: 'output',
+          example: 'Original CSV + new columns: AI_Analysis, Confidence_Score, Processing_Time',
+          details: 'Results available as CSV download or viewable in interactive table'
+        }
+      ],
+      useCases: [
+        'Lead qualification from company databases',
+        'Product categorization and analysis',
+        'Customer sentiment analysis from reviews',
+        'Market research data enrichment',
+        'Content analysis and classification',
+        'Competitive intelligence gathering'
+      ],
+      tips: [
+        'Be specific in your AI prompts for better results',
+        'Start with a small sample to test your prompt',
+        'Larger files take longer but process more efficiently',
+        'Include clear column headers in your CSV',
+        'Consider breaking very large datasets into chunks'
+      ]
+    }
   },
 
   'crawl4logo': {

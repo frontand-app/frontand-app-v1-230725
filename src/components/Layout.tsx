@@ -24,10 +24,13 @@ const Layout = ({ children }: LayoutProps) => {
 
   // V1 Navigation - core workflows
   const navigation = [
-    { name: "Home", href: "/" },
-    { name: "Loop Over Rows", href: "/flows/loop-over-rows" },
-    { name: "Crawl4Imprint", href: "/flows/crawl4imprint" },
-  ];
+  { name: "Home", href: "/" },
+  { name: "Search", href: "/search" },
+  { name: "Loop Over Rows", href: "/flows/loop-over-rows" },
+  { name: "Crawl4Imprint", href: "/flows/crawl4imprint" },
+  { name: "Executions", href: "/executions" },
+  { name: "Developer", href: "/developer" },
+];
 
   const isActive = (path: string) => location.pathname === path;
 

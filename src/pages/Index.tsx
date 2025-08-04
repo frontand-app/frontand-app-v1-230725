@@ -18,7 +18,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="w-full max-w-4xl mx-auto px-6 py-16 text-center">
+      <section className="w-full max-w-4xl mx-auto px-6 py-12 text-center">
         <div className="mb-8">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-secondary rounded-full px-4 py-2 mb-8">
@@ -48,7 +48,7 @@ const Index = () => {
           </p>
           
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
             <Link to="/search">
               <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-8 py-6 text-sm font-medium">
                 DISCOVER ALL WORKFLOWS
@@ -69,7 +69,7 @@ const Index = () => {
       </section>
 
       {/* Hottest Apps Section */}
-      <section className="w-full max-w-6xl mx-auto px-6 py-16">
+      <section className="w-full max-w-6xl mx-auto px-6 py-8">
         <div className="bg-card rounded-3xl border border-border p-8 shadow-lg">
           <div className="mb-8">
             <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-800 rounded-full px-4 py-2 text-sm font-medium">

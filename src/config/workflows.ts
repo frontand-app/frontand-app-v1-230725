@@ -20,6 +20,8 @@ export const workflows: Record<string, WorkflowConfig> = {
     description: 'AI batch processing for CSV data with intelligent analysis',
     icon: BarChart3,
     color: 'blue',
+    status: 'live',
+    category: 'Data Processing',
     
     inputs: [
       {
@@ -147,6 +149,8 @@ Mike Chen,mike@startupxyz.com,StartupXYZ,startupxyz.com`
     description: 'Extract and download company logos from websites automatically',
     icon: Image,
     color: 'purple',
+    status: 'coming-soon',
+    category: 'Data Enrichment',
     
     inputs: [
       {
@@ -213,6 +217,8 @@ Mike Chen,mike@startupxyz.com,StartupXYZ,startupxyz.com`
     description: 'Extract contact information and team members from company websites',
     icon: Users,
     color: 'green',
+    status: 'coming-soon',
+    category: 'Sales & Marketing',
     
     inputs: [
       {
@@ -270,6 +276,8 @@ Mike Chen,mike@startupxyz.com,StartupXYZ,startupxyz.com`
     description: 'Generate comprehensive blog posts with AI collaboration and research',
     icon: PenTool,
     color: 'indigo',
+    status: 'coming-soon',
+    category: 'Content Generation',
     
     inputs: [
       {
@@ -342,6 +350,8 @@ Mike Chen,mike@startupxyz.com,StartupXYZ,startupxyz.com`
     description: 'Monitor and analyze mentions of your brand, products, or keywords across the web',
     icon: Search,
     color: 'yellow',
+    status: 'coming-soon',
+    category: 'Monitoring',
     
     inputs: [
       {
@@ -411,6 +421,8 @@ Mike Chen,mike@startupxyz.com,StartupXYZ,startupxyz.com`
     description: 'AI-powered imprint extraction with 85.9% success rate - extracts company names, addresses, managing directors, registration details',
     icon: FileText,
     color: 'gray',
+    status: 'live',
+    category: 'Legal & Compliance',
     
     inputs: [
       {
@@ -461,6 +473,8 @@ Mike Chen,mike@startupxyz.com,StartupXYZ,startupxyz.com`
     description: 'Transform images with AI - change colors, styles, formats, and more',
     icon: Palette,
     color: 'pink',
+    status: 'coming-soon',
+    category: 'Image Processing',
     
     inputs: [
       {
@@ -542,10 +556,7 @@ export const getAllWorkflows = (): WorkflowConfig[] => {
 
 // Helper function to get workflows by category/status
 export const getWorkflowsByStatus = (live: boolean = true): WorkflowConfig[] => {
-  // For now, only loop-over-rows is live, others are placeholders
-  const liveWorkflows = ['loop-over-rows'];
-  
   return Object.values(workflows).filter(workflow => 
-    live ? liveWorkflows.includes(workflow.id) : !liveWorkflows.includes(workflow.id)
+    live ? workflow.status === 'live' : workflow.status === 'coming-soon'
   );
 }; 

@@ -71,6 +71,8 @@ export interface WorkflowConfig {
   description: string;
   icon: React.ComponentType<{className?: string}>;
   color: string; // CSS class suffix (e.g., 'blue', 'green')
+  status: 'live' | 'coming-soon';
+  category?: string;
   
   // Input Configuration
   inputs: WorkflowField[];

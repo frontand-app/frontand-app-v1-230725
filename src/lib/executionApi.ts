@@ -43,6 +43,7 @@ export interface UpdateExecutionRequest {
   errorMessage?: string;
   completedAt?: string;
   actualTime?: number;
+  costCredits?: number;
 }
 
 // In-memory storage for demo (replace with real database in production)

@@ -9,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ListFilter, Search as SearchIcon } from 'lucide-react';
+import { ListFilter, Search as SearchIcon, Send } from 'lucide-react';
 
 type SortOption = 'popularity' | 'newest';
 
@@ -79,8 +79,17 @@ const Search: React.FC = () => {
                 placeholder="Search for an app..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 pr-4 py-3 h-12 text-base rounded-lg w-full"
+                className="pl-12 pr-14 py-3 h-12 text-base rounded-lg w-full"
               />
+              <Button
+                type="submit"
+                size="icon"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-foreground text-background hover:bg-foreground/90"
+                disabled={!searchQuery}
+              >
+                <Send className="h-4 w-4" />
+                <span className="sr-only">Search</span>
+              </Button>
             </div>
             <div className="flex items-center gap-2">
               <DropdownMenu>

@@ -50,9 +50,8 @@ const Layout = ({ children }: LayoutProps) => {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <Link to="/" className="flex items-center space-x-3">
+            <Link to="/" className="flex items-center">
               <img src="/Front&_Logo.svg" alt="Front&" className="h-8" />
-              <span className="text-sm text-muted-foreground">APP LIBRARY</span>
             </Link>
 
             {/* Desktop Navigation */}

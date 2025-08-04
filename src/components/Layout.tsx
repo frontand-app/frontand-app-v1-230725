@@ -44,25 +44,15 @@ const Layout = ({ children }: LayoutProps) => {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur-sm">
+      <header className="fixed top-0 left-0 right-0 z-50 border-b bg-background/95 backdrop-blur-sm">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-3">
-              <div className="relative">
-                {/* Main & symbol with connection accent */}
-                <div className="w-8 h-8 flex items-center justify-center">
-                  <span className="text-2xl font-bold text-gray-900 relative">
-                    &
-                    {/* Small connection dots */}
-                    <div className="absolute -top-0.5 -right-0.5 w-1 h-1 bg-gray-400 rounded-full"></div>
-                    <div className="absolute -bottom-0.5 -left-0.5 w-1 h-1 bg-gray-400 rounded-full"></div>
-                  </span>
-                </div>
-              </div>
-              <span className="font-semibold text-xl text-gray-900">Front&</span>
+              <img src="/Front&_Logo.svg" alt="Front&" className="h-8" />
+              <span className="text-sm text-muted-foreground">APP LIBRARY</span>
             </Link>
 
             {/* Desktop Navigation */}
@@ -71,10 +61,10 @@ const Layout = ({ children }: LayoutProps) => {
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`text-sm font-medium transition-colors hover:text-gray-900 ${
+                  className={`text-sm font-medium transition-colors hover:text-foreground ${
                     isActive(item.href)
-                      ? "text-gray-900"
-                      : "text-gray-600"
+                      ? "text-foreground"
+                      : "text-muted-foreground"
                   }`}
                 >
                   {item.name}
@@ -89,7 +79,7 @@ const Layout = ({ children }: LayoutProps) => {
                   href="https://github.com/frontand-app/frontand-platform"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
+                  className="flex items-center space-x-2 text-muted-foreground hover:text-foreground"
                 >
                   <Github className="w-4 h-4" />
                   <span>GitHub</span>
@@ -128,7 +118,7 @@ const Layout = ({ children }: LayoutProps) => {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Button size="sm" className="bg-primary-500 hover:bg-primary-600 text-white" asChild>
+                <Button variant="outline" className="bg-primary text-primary-foreground border-primary hover:bg-primary/90 rounded-full px-6" asChild>
                   <Link to="/auth">Sign In</Link>
                 </Button>
               )}
@@ -152,7 +142,7 @@ const Layout = ({ children }: LayoutProps) => {
 
           {/* Mobile Navigation */}
           {isMobileMenuOpen && (
-            <div className="md:hidden border-t border-gray-200 py-4">
+            <div className="md:hidden border-t py-4">
               <nav className="flex flex-col space-y-4">
                 {navigation.map((item) => (
                   <Link
@@ -160,8 +150,8 @@ const Layout = ({ children }: LayoutProps) => {
                     to={item.href}
                     className={`text-sm font-medium px-2 py-1 rounded transition-colors ${
                       isActive(item.href)
-                        ? "text-primary-600 bg-primary-50"
-                        : "text-gray-700 hover:text-primary-600"
+                        ? "text-primary bg-primary/10"
+                        : "text-muted-foreground hover:text-primary"
                     }`}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
@@ -175,7 +165,7 @@ const Layout = ({ children }: LayoutProps) => {
                       href="https://github.com/frontand-app/frontand-app-v1-clean"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center space-x-2 text-gray-700 hover:text-primary-600"
+                      className="flex items-center space-x-2 text-muted-foreground hover:text-primary"
                     >
                       <Github className="w-4 h-4" />
                       <span>GitHub</span>
@@ -184,7 +174,7 @@ const Layout = ({ children }: LayoutProps) => {
                   
                   {user ? (
                     <div className="space-y-2">
-                      <div className="px-3 py-2 text-sm text-gray-700">
+                      <div className="px-3 py-2 text-sm text-muted-foreground">
                         {user.email}
                       </div>
                       <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
@@ -199,7 +189,7 @@ const Layout = ({ children }: LayoutProps) => {
                       </Button>
                     </div>
                   ) : (
-                    <Button size="sm" className="w-full bg-primary-500 hover:bg-primary-600 text-white" asChild>
+                    <Button size="sm" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" asChild>
                       <Link to="/auth">Sign In</Link>
                     </Button>
                   )}
@@ -216,29 +206,19 @@ const Layout = ({ children }: LayoutProps) => {
       </main>
 
       {/* V1 Simplified Footer */}
-      <footer className="border-t bg-gray-50 mt-16">
+      <footer className="border-t bg-secondary mt-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="flex items-center space-x-4">
               <Link to="/" className="flex items-center space-x-2">
-                <div className="relative">
-                  {/* Minimalist & Symbol */}
-                  <div className="w-8 h-8 flex items-center justify-center">
-                    <span className="text-2xl font-bold text-gray-800">&</span>
-                  </div>
-                  {/* Subtle connection dots */}
-                  <div className="absolute -top-1 -right-1 w-2 h-2">
-                    <div className="w-1 h-1 bg-gray-400 rounded-full absolute top-0 left-0"></div>
-                    <div className="w-1 h-1 bg-gray-300 rounded-full absolute top-1 left-1"></div>
-                  </div>
-                </div>
-                <span className="font-bold text-gray-900">Front&</span>
+                <img src="/Front&_Logo.svg" alt="Front&" className="h-6" />
+                <span className="font-bold text-foreground">Front&</span>
               </Link>
-              <span className="text-sm text-gray-600">One frontend, infinite cloud apps</span>
+              <span className="text-sm text-muted-foreground">One frontend, infinite cloud apps</span>
             </div>
             
-            <div className="flex items-center space-x-6 text-sm text-gray-600">
-              <a href="https://github.com/frontand-app/frontand-platform" target="_blank" rel="noopener noreferrer" className="hover:text-gray-900">
+            <div className="flex items-center space-x-6 text-sm text-muted-foreground">
+              <a href="https://github.com/frontand-app/frontand-platform" target="_blank" rel="noopener noreferrer" className="hover:text-foreground">
                 GitHub
               </a>
               <span>© 2025 Front&</span>

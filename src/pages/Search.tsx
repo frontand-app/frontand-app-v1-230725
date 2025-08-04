@@ -70,7 +70,7 @@ const Search: React.FC = () => {
         </div>
 
         {/* Search and Filter */}
-        <div className="mb-12 sticky top-4 z-10 bg-background/80 backdrop-blur-sm p-4 rounded-xl -mx-4">
+        <div className="mb-12">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-grow">
               <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />

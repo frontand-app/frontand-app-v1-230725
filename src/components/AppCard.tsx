@@ -25,7 +25,7 @@ const AppCard = ({ title, category, description, likes, views }: AppCardProps) =
 
   return (
     <Link to={`/flows/${getAppSlug(title)}`}>
-      <Card className="group cursor-pointer hover:shadow-lg transition-all duration-300 border-0 rounded-2xl overflow-hidden bg-background">
+             <Card className="group cursor-pointer hover:shadow-lg transition-all duration-300 border border-border rounded-2xl overflow-hidden bg-background">
         <CardContent className="p-6">
           <div className="mb-4">
             <span className="text-xs font-medium text-muted-foreground bg-secondary px-3 py-1.5 rounded-full">

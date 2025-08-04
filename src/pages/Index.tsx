@@ -13,6 +13,7 @@ import {
   Workflow
 } from "lucide-react";
 import { getAllWorkflows, getWorkflowsByStatus } from "@/config/workflows";
+import AppCard from "@/components/AppCard";
 
 const Index = () => {
   const liveWorkflows = getWorkflowsByStatus(true);
@@ -89,6 +90,49 @@ const Index = () => {
               <div className="text-sm text-muted-foreground">{stat.label}</div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Hottest Apps Section */}
+      <section className="w-full max-w-6xl mx-auto px-6 py-12">
+        <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
+          <div className="mb-6">
+            <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-800 rounded-full px-3 py-1 text-xs font-medium">
+              <span className="text-orange-600">🔥</span>
+              Hottest Apps
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <AppCard
+              title="LOOP OVER ROWS"
+              category="Lead Scoring, Content Analysis"
+              description="AI batch processing for CSV data with intelligent analysis"
+              likes="4K"
+              views="16K"
+            />
+            <AppCard
+              title="CRAWL4LOGO"
+              category="Tech Companies"
+              description="Extract and download company logos from websites automatically"
+              likes="4K"
+              views="16K"
+            />
+            <AppCard
+              title="CRAWL4CONTACTS"
+              category="Sales Outreach"
+              description="Extract contact information and team members from company websites"
+              likes="2.3K"
+              views="8K"
+            />
+            <AppCard
+              title="CO-STORM BLOG GEN"
+              category="Tech Blog Post"
+              description="Generate comprehensive blog posts with AI collaboration and research"
+              likes="11K"
+              views="32K"
+            />
+          </div>
         </div>
       </section>
 

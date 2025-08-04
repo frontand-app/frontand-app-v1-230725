@@ -1,11 +1,13 @@
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
 import { Link } from "react-router-dom";
 import { 
   ArrowRight, 
   Clock,
-  PlayCircle
+  PlayCircle,
+  Heart,
+  Eye
 } from "lucide-react";
 import { getWorkflowsByStatus } from "@/config/workflows";
 import AppCard from "@/components/AppCard";
@@ -123,77 +125,92 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {allWorkflows.map((workflow) => {
               const isLive = liveWorkflows.some(w => w.id === workflow.id);
 
               return (
-                <Card key={workflow.id} className={`border ${isLive ? 'hover:shadow-md' : 'opacity-75'} transition-all duration-200`}>
-                  <CardHeader className="pb-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-secondary rounded-lg">
-                          <workflow.icon className="w-5 h-5 text-muted-foreground" />
-                        </div>
-                        <div>
-                          <CardTitle className="text-lg text-foreground">
-                            {workflow.title}
-                          </CardTitle>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            {isLive ? (
-                              <span className="flex items-center gap-1">
-                                <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                                Live
-                              </span>
-                            ) : (
-                              <span className="flex items-center gap-1">
-                                <Clock className="w-3 h-3" />
-                                Coming Soon
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                </div>
-              </div>
+                <div key={workflow.id} className={`group cursor-pointer hover:shadow-lg transition-all duration-300 border-0 rounded-2xl overflow-hidden bg-background ${!isLive ? 'opacity-75' : ''}`}>
+                  <div className="p-6">
+                    <div className="mb-4">
+                      <span className="text-xs font-medium text-muted-foreground bg-secondary px-3 py-1.5 rounded-full">
+                        {isLive ? (
+                          <span className="flex items-center gap-1.5">
+                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                            Live
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1.5">
+                            <Clock className="w-3 h-3" />
+                            Coming Soon
+                          </span>
+                        )}
+                      </span>
+                    </div>
                     
-                    <CardDescription className="text-muted-foreground text-sm leading-relaxed">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="p-2 bg-secondary rounded-lg">
+                        <workflow.icon className="w-5 h-5 text-muted-foreground" />
+                      </div>
+                      <h3 className="text-base font-bold text-foreground group-hover:text-primary transition-colors leading-tight">
+                        {workflow.title}
+                      </h3>
+                    </div>
+                    
+                    <p className="text-sm text-muted-foreground mb-6 leading-relaxed line-clamp-3">
                       {workflow.description}
-                    </CardDescription>
-                  </CardHeader>
-                  
-                  <CardContent className="pt-0">
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {workflow.templates?.slice(0, 3).map((template, templateIndex) => (
-                        <span key={templateIndex} className="px-2 py-1 bg-secondary text-muted-foreground text-xs rounded">
-                          {template.title}
-                        </span>
-            ))}
-          </div>
+                    </p>
 
-                    {isLive ? (
-                      <Button 
-                        asChild 
-                        className="w-full bg-foreground hover:bg-foreground/90 text-background"
-                        size="sm"
-                      >
-                        <Link to={`/flows/${workflow.id}`}>
-                          <PlayCircle className="mr-2 w-4 h-4" />
-                          Try Now
-                          <ArrowRight className="ml-2 w-4 h-4" />
-                        </Link>
-                      </Button>
-                    ) : (
-                      <Button 
-                        disabled 
-                        className="w-full bg-secondary text-muted-foreground cursor-not-allowed"
-                        size="sm"
-                      >
-                        <Clock className="mr-2 w-4 h-4" />
-                        Coming Soon
-            </Button>
+                    {workflow.templates && workflow.templates.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-6">
+                        {workflow.templates.slice(0, 3).map((template, templateIndex) => (
+                          <span key={templateIndex} className="px-2 py-1 bg-secondary text-muted-foreground text-xs rounded">
+                            {template.title}
+                          </span>
+                        ))}
+                      </div>
                     )}
-                  </CardContent>
-                </Card>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1.5">
+                          <Heart className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm font-medium text-foreground">
+                            {isLive ? '2.5K' : '0'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Eye className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm font-medium text-foreground">
+                            {isLive ? '8.2K' : '0'}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      {isLive ? (
+                        <Link to={`/flows/${workflow.id}`}>
+                          <Button 
+                            className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-4 py-2 text-sm font-medium"
+                            size="sm"
+                          >
+                            <PlayCircle className="mr-2 w-4 h-4" />
+                            Try Now
+                            <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-all" />
+                          </Button>
+                        </Link>
+                      ) : (
+                        <Button 
+                          disabled 
+                          className="bg-secondary text-muted-foreground cursor-not-allowed rounded-full px-4 py-2 text-sm font-medium"
+                          size="sm"
+                        >
+                          <Clock className="mr-2 w-4 h-4" />
+                          Coming Soon
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
               );
             })}
           </div>

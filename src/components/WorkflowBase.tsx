@@ -4,10 +4,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Play, AlertCircle, Upload, FileText, Search, Globe, BarChart3, Sparkles, File, CheckCircle2, X, ChevronDown, Check, Clock, Lightbulb, Info, ArrowRight, AlertTriangle, Shield, TrendingUp } from 'lucide-react';
+import { Loader2, Play, AlertCircle, Upload, FileText, Search, Globe, BarChart3, Sparkles, File, CheckCircle2, X, ChevronDown, Check, Clock, Lightbulb, Info, ArrowRight, AlertTriangle, Shield, TrendingUp, Heart, Eye, ArrowDown } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { TableOutput, TableData } from '@/components/TableOutput';
 import { cn } from "@/lib/utils";
@@ -109,10 +116,11 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
   const [error, setError] = useState<string | null>(null);
   const [showResults, setShowResults] = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
+  const [step, setStep] = useState(1); // 1: empty form, 2: filled form, 3: results
   
   // Input states - dynamic based on config
   const [inputValues, setInputValues] = useState<Record<string, any>>({});
-  const [testMode, setTestMode] = useState(config.supportsTestMode ?? false);
+  const [testMode, setTestMode] = useState(false);
   const [enableGoogleSearch, setEnableGoogleSearch] = useState(false);
   
   // UI states
@@ -122,6 +130,25 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
   const [openTemplates, setOpenTemplates] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState('');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+
+  const handleMockModeToggle = (isMockMode: boolean) => {
+    setTestMode(isMockMode);
+    if (isMockMode && config.id === 'keyword-kombat') {
+      setInputValues({
+        keywords: 'music\nstreaming\nsubscription',
+        company_url: 'https://www.spotify.com/',
+        keyword_variable: 'keyword'
+      });
+      setUploadedFile({ name: 'company_list_august2025.csv (35KB)' } as File);
+      setStep(2);
+      setError(null);
+    } else {
+      setInputValues({});
+      setUploadedFile(null);
+      setStep(1);
+      setError(null);
+    }
+  };
 
   // Dynamic loading phrases based on workflow
   const getLoadingPhrases = () => {
@@ -321,6 +348,22 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
 
   // Handle execution
   const handleExecute = async () => {
+    // Handle mock mode first for keyword-kombat, as it fills the form
+    if (config.id === 'keyword-kombat' && testMode && step === 2) {
+      setResults([
+        { keyword: "music", score: "0.8", reasoning: "Music is a core focus of the platform, central to its..." },
+        { keyword: "streaming", score: "0.95", reasoning: "The company is explicitly described as a streamin..." },
+        { keyword: "subscription", score: "0.85", reasoning: "The business model is primarily subscription-based." },
+        { keyword: "AI", score: "0.3", reasoning: "No mention of AI; possible light use in personaliza..." },
+        { keyword: "ads", score: "0.2", reasoning: "Ads are part of the freemium model, but not emph..." },
+        { keyword: "blockchain", score: "0", reasoning: "No mention or implication of blockchain or crypto-..." },
+        { keyword: "mobile app", score: "0.6", reasoning: "Spotify's core user experience is delivered via a m..." }
+      ]);
+      setShowResults(true);
+      setStep(3);
+      return;
+    }
+
     const validationError = validateInputs();
     if (validationError) {
       setError(validationError);
@@ -709,7 +752,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                   <span className="font-medium text-gray-900">
-                    Processed {tableData.length} row(s) successfully
+              Processed {tableData.length} row(s) successfully
                   </span>
                 </div>
                 
@@ -740,11 +783,11 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                     <span className="text-yellow-700">Some results may need review</span>
                   </div>
                 )}
-                {results.output_column_name && (
-                  <span className="text-gray-500">
+              {results.output_column_name && (
+                <span className="text-gray-500">
                     Output: {results.output_column_name.replace(/_/g, ' ')}
-                  </span>
-                )}
+                </span>
+              )}
               </div>
             </div>
             
@@ -824,18 +867,44 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
     <div className="min-h-screen bg-background text-foreground">
       <div className="container mx-auto px-4 py-12 max-w-6xl">
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-secondary rounded-full text-sm font-medium text-muted-foreground mb-4">
-            <config.icon className="w-4 h-4" />
-            <span>{config.category}</span>
+        <div className="mb-6">
+          <div className="inline-flex items-center gap-2 bg-secondary rounded-full px-3 py-1 text-sm">
+            {config.category}
           </div>
-          <h1 className="text-4xl lg:text-5xl font-bold tracking-tight text-foreground mb-4">
-            {config.title}
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+        </div>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold">{config.title}</h1>
+              <ChevronDown className="h-5 w-5" />
+            </div>
+          </div>
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <Heart className="h-4 w-4" />
+              <span className="text-sm font-medium">4K</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Eye className="h-4 w-4" />
+              <span className="text-sm font-medium">16K</span>
+            </div>
+          </div>
+        </div>
+        <p className="text-muted-foreground mb-6">
             {config.description}
           </p>
+
+        {config.supportsTestMode && (
+          <div className="flex items-center gap-3 mb-8">
+            <Switch 
+              checked={testMode} 
+              onCheckedChange={handleMockModeToggle}
+              className="data-[state=checked]:bg-foreground"
+            />
+            <span className="font-medium text-foreground">Mock mode</span>
+            <Info className="h-4 w-4 text-muted-foreground" />
         </div>
+        )}
 
         {/* Simple Expandable Explanation */}
         {config.visualExplanation && (
@@ -846,7 +915,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                 <p className="text-sm text-muted-foreground">
                   {config.visualExplanation.overview || `${config.title} workflow`}
                 </p>
-              </div>
+                  </div>
               <div className="flex items-center gap-3">
                 {config.visualExplanation.estimatedTime && (
                   <span className="text-xs text-muted-foreground flex items-center gap-1">
@@ -877,15 +946,15 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                         </div>
                         
                         {/* Step content */}
-                        <div className="flex-1">
+                                  <div className="flex-1">
                           <h4 className="font-medium text-foreground mb-1">{step.title}</h4>
                           <p className="text-sm text-muted-foreground mb-2">{step.description}</p>
                           
                           {step.example && (
                             <p className="text-xs text-muted-foreground/80 italic">Example: {step.example}</p>
                           )}
-                        </div>
-                      </div>
+                                  </div>
+                                </div>
                     ))}
                   </div>
 
@@ -901,127 +970,124 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                   )}
                 </div>
               </div>
-            )}
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
-          {/* INPUT SECTION */}
-          <div className="space-y-6">
-            <Card className="border-border rounded-2xl bg-card shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-3 text-xl font-semibold">
-                  <div className="p-2.5 bg-secondary rounded-lg border border-border">
-                    <config.icon className="w-5 h-5 text-foreground" />
-                  </div>
-                  Input
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Dynamic Input Fields */}
-                {config.inputs.map((field) => (
-                  <div key={field.id} className="space-y-3">
-                    <Label htmlFor={field.id} className="font-medium">
-                      {field.label}
-                      {field.required && <span className="text-destructive ml-1">*</span>}
-                    </Label>
-                    {renderInputField(field)}
-                    {field.helpText && (
-                      <p className="text-xs text-muted-foreground">{field.helpText}</p>
                     )}
                   </div>
-                ))}
+        )}
 
-                {/* Control Settings */}
-                <div className="space-y-3 pt-6 border-t border-border">
-                  <div className="font-medium">Settings</div>
-                  
-                  {config.supportsTestMode && (
-                    <div className="flex items-center justify-between p-3 border border-border rounded-lg bg-background">
-                      <div>
-                        <Label htmlFor="test-mode" className="font-medium cursor-pointer">
-                          Test Mode
-                        </Label>
-                        <p className="text-xs text-muted-foreground">
-                          {testMode ? 'Process 1 row for quick testing' : 'Process all data'}
-                        </p>
-                      </div>
-                      <Switch
-                        id="test-mode"
-                        checked={testMode}
-                        onCheckedChange={setTestMode}
-                      />
-                    </div>
-                  )}
-
-                  {config.supportsGoogleSearch && (
-                    <div className="flex items-center justify-between p-3 border border-border rounded-lg bg-background">
-                      <div>
-                        <Label htmlFor="google-search" className="font-medium cursor-pointer">
-                          Google Search
-                        </Label>
-                        <p className="text-xs text-muted-foreground">
-                          {enableGoogleSearch 
-                            ? 'AI can access real-time web info'
-                            : 'AI uses only its training data'
-                          }
-                        </p>
-                      </div>
-                      <Switch
-                        id="google-search"
-                        checked={enableGoogleSearch}
-                        onCheckedChange={setEnableGoogleSearch}
-                      />
-                    </div>
-                  )}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto items-stretch">
+          {/* INPUT SECTION */}
+          <div className="space-y-6">
+            <Card className="border-2 border-primary rounded-2xl">
+              <CardContent className="p-6">
+                <div className="bg-primary text-primary-foreground rounded-lg px-3 py-1 text-sm font-medium inline-block mb-6">
+                  YOUR INPUT
                 </div>
 
-                {/* Execute Button */}
+                <div className="space-y-6">
+                        <div>
+                    <h3 className="font-medium text-foreground mb-4">
+                      1. {step >= 2 ? "Upload your CSV file with the keywords you would like to rank*" : "Upload a file or paste a list with the keywords you would like to rank*"}
+                    </h3>
+                    
+                    {step >= 2 && uploadedFile ? (
+                      <div className="space-y-3">
+                        <div className="text-sm font-medium text-foreground">Keyword</div>
+                        <div className="space-y-1 text-sm text-muted-foreground">
+                          {inputValues.keywords.split('\n').map((keyword: string, idx: number) => (
+                            <div key={idx}>{keyword}</div>
+                          ))}
+                        </div>
+                        <div className="flex items-center justify-between pt-3 border-t">
+                          <span className="text-sm text-foreground">✓ {uploadedFile.name}</span>
+                          <Button variant="outline" size="sm">Upload new</Button>
+                      </div>
+                    </div>
+                    ) : (
+                      <>
+                        <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
+                          <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-4" />
+                          <p className="font-medium text-foreground mb-2">Upload a CSV or XLSX file up to 10 MB.</p>
+                          <p className="text-sm text-muted-foreground">Please include headers in the first row.</p>
+                        </div>
+                        
+                        <Textarea
+                          placeholder="Paste your keyword list here."
+                          value={inputValues.keywords || ''}
+                          onChange={(e) => handleInputChange('keywords', e.target.value)}
+                          className="min-h-[100px] resize-none"
+                        />
+                      </>
+                    )}
+                  </div>
+
+                  {/* Step 2: Input Fields */}
+                        <div>
+                    <h3 className="font-medium text-foreground mb-4">2. Provide input fields*</h3>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-sm text-foreground mb-2 block">Map keyword variable</label>
+                        <Select value={inputValues.keyword_variable || ''} onValueChange={(value) => handleInputChange('keyword_variable', value)}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="keyword">keyword</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        </div>
+                      
+                      <div>
+                        <label className="text-sm text-foreground mb-2 block">Enter company URL</label>
+                        <Input
+                          placeholder="https://www.example.com/"
+                          value={inputValues.company_url || ''}
+                          onChange={(e) => handleInputChange('company_url', e.target.value)}
+                      />
+                    </div>
+                    </div>
+                </div>
+
+                  {/* Run Button */}
+                  <div className="flex items-center gap-3 pt-4">
                 <Button
                   onClick={handleExecute}
                   disabled={isExecuting}
-                  className="w-full h-12 text-base font-medium"
-                >
-                  {isExecuting ? (
-                    <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <Play className="w-5 h-5 mr-2" />
-                      Run Workflow
-                    </>
-                  )}
+                      className="flex-1 py-6 text-sm font-medium rounded-full bg-foreground hover:bg-foreground/90 text-background"
+                    >
+                      RUN WORKFLOW
+                      <div className="ml-2">→</div>
                 </Button>
+                  </div>
 
-                {/* Enhanced Error Display */}
                 {error && (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      <p className="font-medium mb-1">An error occurred:</p>
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
                       {error}
                     </AlertDescription>
                   </Alert>
                 )}
+                </div>
               </CardContent>
             </Card>
           </div>
 
           {/* OUTPUT SECTION */}
           <div className="space-y-6">
-            <Card className="border-border rounded-2xl bg-card shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-3 text-xl font-semibold">
-                  <div className="p-2.5 bg-secondary rounded-lg border border-border">
-                    <BarChart3 className="w-5 h-5 text-foreground" />
+            <Card className="border-2 border-border rounded-2xl">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="bg-muted text-muted-foreground rounded-lg px-3 py-1 text-sm font-medium">
+                    WORKFLOW OUTPUT
                   </div>
-                  Results
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {/* Loading State */}
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>⚡</span>
+                    <span>Powered By Gemini 2.5 Flash</span>
+                    <Info className="h-4 w-4" />
+                      </div>
+                    </div>
+
                 {isExecuting && (
                   <div className="py-12 space-y-6">
                     <div className="text-center">
@@ -1049,23 +1115,35 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                   </div>
                 )}
 
-                {/* Results Display */}
                 {showResults && (
-                  <div className="space-y-3 animate-in fade-in duration-500">
+                  <div className="space-y-4">
                     {renderResults()}
                   </div>
                 )}
 
-                {/* Empty State */}
                 {!isExecuting && !showResults && (
-                  <div className="flex flex-col items-center justify-center py-20 text-muted-foreground text-center">
-                    <div className="p-4 bg-secondary rounded-full border border-border mb-4">
-                        <Sparkles className="w-8 h-8 text-foreground" />
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center text-sm font-bold">1</div>
+                      <span className="text-foreground">AI Processing</span>
                     </div>
-                    <h3 className="text-lg font-semibold text-foreground mb-2">Results will appear here</h3>
-                    <p className="max-w-xs text-sm">
-                      Configure your settings on the left and click "Run Workflow" to start.
-                    </p>
+                    <div className="flex justify-center">
+                      <ArrowDown className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center text-sm font-bold">2</div>
+                      <div>
+                        <div className="text-foreground">Loop: Scoring for each keyword based on company info</div>
+                        <div className="text-sm text-muted-foreground">Output: Suitability score, AI reasoning</div>
+                      </div>
+                    </div>
+                    <div className="flex justify-center">
+                      <ArrowDown className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center text-sm font-bold">3</div>
+                      <span className="text-foreground">Aggregate output in one file.</span>
+                    </div>
                   </div>
                 )}
               </CardContent>

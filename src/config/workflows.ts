@@ -541,6 +541,54 @@ Mike Chen,mike@startupxyz.com,StartupXYZ,startupxyz.com`
     
     outputType: 'image',
     downloadable: true
+  },
+
+  'keyword-kombat': {
+    id: 'keyword-kombat',
+    title: 'Keyword Kombat',
+    description: 'Score keywords based on company description',
+    icon: BarChart3,
+    color: 'blue',
+    status: 'live',
+    category: 'Data Processing',
+
+    inputs: [
+      {
+        id: 'keywords',
+        label: 'Keywords',
+        type: 'csv',
+        placeholder: 'music\nstreaming\nsubscription',
+        required: true,
+        helpText: 'Upload a file or paste a list with the keywords you would like to rank*'
+      },
+      {
+        id: 'company_url',
+        label: 'Company URL',
+        type: 'url',
+        placeholder: 'https://www.spotify.com/',
+        required: true
+      },
+      {
+        id: 'keyword_variable',
+        label: 'Map keyword variable',
+        type: 'select',
+        options: [
+          { id: 'keyword', label: 'keyword', value: 'keyword' }
+        ],
+        required: true
+      }
+    ],
+
+    endpoint: '', // Add your endpoint here
+    supportsTestMode: true,
+
+    estimatedTime: {
+      base: 10,
+      perItem: 2
+    },
+
+    outputType: 'table',
+    downloadable: true
   }
 };
 

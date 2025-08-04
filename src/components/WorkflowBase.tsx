@@ -821,40 +821,42 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="container mx-auto px-4 py-8 max-w-5xl">
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="container mx-auto px-4 py-12 max-w-6xl">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full text-gray-600 text-sm mb-4">
-            <Sparkles className="w-3 h-3" />
-            Powered by Gemini 2.5 Flash
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-secondary rounded-full text-sm font-medium text-muted-foreground mb-4">
+            <config.icon className="w-4 h-4" />
+            <span>{config.category}</span>
           </div>
-          <h1 className="text-2xl font-semibold text-gray-900 mb-2">{config.title}</h1>
-          <p className="text-gray-600 max-w-2xl mx-auto text-base">
+          <h1 className="text-4xl lg:text-5xl font-bold tracking-tight text-foreground mb-4">
+            {config.title}
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
             {config.description}
           </p>
         </div>
 
         {/* Simple Expandable Explanation */}
         {config.visualExplanation && (
-          <div className="mb-6">
+          <div className="mb-8 max-w-4xl mx-auto">
             {/* Minimal Overview - Always Visible */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="flex items-center justify-between p-4 bg-secondary rounded-lg border border-border">
               <div className="flex-1">
-                <p className="text-sm text-gray-700">
+                <p className="text-sm text-muted-foreground">
                   {config.visualExplanation.overview || `${config.title} workflow`}
                 </p>
               </div>
               <div className="flex items-center gap-3">
                 {config.visualExplanation.estimatedTime && (
-                  <span className="text-xs text-gray-500 flex items-center gap-1">
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
                     <Clock className="h-3 w-3" />
                     {config.visualExplanation.estimatedTime}
                   </span>
                 )}
                 <button
                   onClick={() => setShowExplanation(!showExplanation)}
-                  className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-100"
+                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 px-2 py-1 rounded hover:bg-background/50"
                 >
                   {showExplanation ? 'Hide details' : 'How it works'}
                   <ChevronDown className={`h-3 w-3 transition-transform ${showExplanation ? 'rotate-180' : ''}`} />
@@ -864,23 +866,23 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
 
             {/* Expandable Details */}
             {showExplanation && (
-              <div className="mt-3 border border-gray-200 rounded-lg bg-white">
+              <div className="mt-3 border border-border rounded-lg bg-background">
                 <div className="p-6">
                   <div className="space-y-6">
                     {config.visualExplanation.steps.map((step, index) => (
-                      <div key={step.step} className="flex gap-3">
+                      <div key={step.step} className="flex gap-4">
                         {/* Simple step indicator */}
-                        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
-                          <span className="text-xs font-medium text-gray-600">{step.step}</span>
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-secondary flex items-center justify-center border border-border">
+                          <span className="font-medium text-foreground">{step.step}</span>
                         </div>
                         
                         {/* Step content */}
                         <div className="flex-1">
-                          <h4 className="font-medium text-sm text-gray-900 mb-1">{step.title}</h4>
-                          <p className="text-xs text-gray-600 mb-2">{step.description}</p>
+                          <h4 className="font-medium text-foreground mb-1">{step.title}</h4>
+                          <p className="text-sm text-muted-foreground mb-2">{step.description}</p>
                           
                           {step.example && (
-                            <p className="text-xs text-gray-500 italic">Example: {step.example}</p>
+                            <p className="text-xs text-muted-foreground/80 italic">Example: {step.example}</p>
                           )}
                         </div>
                       </div>
@@ -889,9 +891,9 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
 
                   {/* Compact Use Cases */}
                   {config.visualExplanation.useCases && config.visualExplanation.useCases.length > 0 && (
-                    <div className="mt-6 pt-4 border-t border-gray-100">
-                      <p className="text-xs font-medium text-gray-700 mb-2">Common uses:</p>
-                      <p className="text-xs text-gray-600">
+                    <div className="mt-6 pt-6 border-t border-border">
+                      <p className="text-sm font-medium text-foreground mb-3">Common uses:</p>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
                         {config.visualExplanation.useCases.slice(0, 3).join(' • ')}
                         {config.visualExplanation.useCases.length > 3 && ' • ...'}
                       </p>
@@ -903,142 +905,72 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
           {/* INPUT SECTION */}
           <div className="space-y-6">
-            <Card className="border border-gray-200">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-3 text-lg font-medium">
-                  <div className="p-2 bg-gray-100 rounded-lg">
-                    <config.icon className="w-4 h-4 text-gray-600" />
+            <Card className="border-border rounded-2xl bg-card shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-xl font-semibold">
+                  <div className="p-2.5 bg-secondary rounded-lg border border-border">
+                    <config.icon className="w-5 h-5 text-foreground" />
                   </div>
                   Input
                 </CardTitle>
-                <CardDescription className="text-sm flex items-center justify-between">
-                  <span>Configure your {config.title.toLowerCase()} settings</span>
-                  {config.templates && config.templates.length > 0 && (
-                    <Popover open={openTemplates} onOpenChange={setOpenTemplates}>
-                      <PopoverTrigger asChild>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-6 px-2 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50"
-                        >
-                          {selectedTemplate ? "✓" : "Templates"}
-                          <ChevronDown className="ml-1 h-2 w-2 shrink-0 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-[280px] p-0" align="end">
-                        <Command>
-                          <CommandInput placeholder="Search templates..." className="h-9" />
-                          <CommandEmpty>No templates found.</CommandEmpty>
-                          <CommandGroup className="max-h-[200px] overflow-auto">
-                            {config.templates.map((template) => (
-                              <CommandItem
-                                key={template.id}
-                                onSelect={() => handleTemplateSelect(template)}
-                                className="flex flex-col items-start p-3 cursor-pointer"
-                              >
-                                <div className="flex items-center w-full">
-                                  <Check
-                                    className={cn(
-                                      "mr-2 h-4 w-4",
-                                      selectedTemplate === template.title ? "opacity-100" : "opacity-0"
-                                    )}
-                                  />
-                                  <div className="flex-1">
-                                    <div className="font-medium text-sm">{template.title}</div>
-                                    <div className="text-xs text-gray-500 mt-1">{template.description}</div>
-                                  </div>
-                                </div>
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-                  )}
-                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Dynamic Input Fields */}
                 {config.inputs.map((field) => (
                   <div key={field.id} className="space-y-3">
-                    <Label htmlFor={field.id} className="text-sm font-medium text-gray-900">
+                    <Label htmlFor={field.id} className="font-medium">
                       {field.label}
-                      {field.required && <span className="text-red-500 ml-1">*</span>}
+                      {field.required && <span className="text-destructive ml-1">*</span>}
                     </Label>
                     {renderInputField(field)}
                     {field.helpText && (
-                      <p className="text-xs text-gray-500">{field.helpText}</p>
+                      <p className="text-xs text-muted-foreground">{field.helpText}</p>
                     )}
                   </div>
                 ))}
 
                 {/* Control Settings */}
-                <div className="space-y-3 pt-4 border-t border-gray-100">
-                  <div className="text-sm font-medium text-gray-700 mb-2">Settings</div>
-                  
-                  {/* Smart Validation Warnings */}
-                  {config.id === 'loop-over-rows' && inputValues.csv_data && (
-                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <div className="flex items-start gap-2">
-                        <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                        <div className="text-xs text-blue-800">
-                          <p className="font-medium mb-1">💡 Optimization tip:</p>
-                          <p>Your CSV has {(inputValues.csv_data.split('\n').length - 1)} rows. 
-                          {(inputValues.csv_data.split('\n').length - 1) > 100 ? 
-                            ' Consider enabling test mode first to validate your prompt with 1 row.' :
-                            ' This should process quickly with your current settings.'
-                          }</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                <div className="space-y-3 pt-6 border-t border-border">
+                  <div className="font-medium">Settings</div>
                   
                   {config.supportsTestMode && (
-                    <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
-                        <div>
-                          <Label htmlFor="test-mode" className="text-sm font-medium text-gray-700 cursor-pointer">
-                            Test Mode
-                          </Label>
-                          <p className="text-xs text-gray-500">
-                            {testMode ? 'Process limited data for testing' : 'Process all data'}
-                          </p>
-                        </div>
+                    <div className="flex items-center justify-between p-3 border border-border rounded-lg bg-background">
+                      <div>
+                        <Label htmlFor="test-mode" className="font-medium cursor-pointer">
+                          Test Mode
+                        </Label>
+                        <p className="text-xs text-muted-foreground">
+                          {testMode ? 'Process 1 row for quick testing' : 'Process all data'}
+                        </p>
                       </div>
                       <Switch
                         id="test-mode"
                         checked={testMode}
                         onCheckedChange={setTestMode}
-                        className="data-[state=checked]:bg-gray-900"
                       />
                     </div>
                   )}
 
                   {config.supportsGoogleSearch && (
-                    <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
-                        <div>
-                          <Label htmlFor="google-search" className="text-sm font-medium text-gray-700 cursor-pointer">
-                            Google Search
-                          </Label>
-                          <p className="text-xs text-gray-500">
-                            {enableGoogleSearch 
-                              ? 'AI can access real-time web information'
-                              : 'AI uses only its training data'
-                            }
-                          </p>
-                        </div>
+                    <div className="flex items-center justify-between p-3 border border-border rounded-lg bg-background">
+                      <div>
+                        <Label htmlFor="google-search" className="font-medium cursor-pointer">
+                          Google Search
+                        </Label>
+                        <p className="text-xs text-muted-foreground">
+                          {enableGoogleSearch 
+                            ? 'AI can access real-time web info'
+                            : 'AI uses only its training data'
+                          }
+                        </p>
                       </div>
                       <Switch
                         id="google-search"
                         checked={enableGoogleSearch}
                         onCheckedChange={setEnableGoogleSearch}
-                        className="data-[state=checked]:bg-gray-900"
                       />
                     </div>
                   )}
@@ -1048,61 +980,28 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                 <Button
                   onClick={handleExecute}
                   disabled={isExecuting}
-                  className="w-full h-10 bg-gray-900 hover:bg-gray-800 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full h-12 text-base font-medium"
                 >
                   {isExecuting ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                       Processing...
                     </>
                   ) : (
                     <>
-                      <Play className="w-4 h-4 mr-2" />
-                      Run {config.title}
+                      <Play className="w-5 h-5 mr-2" />
+                      Run Workflow
                     </>
                   )}
                 </Button>
 
                 {/* Enhanced Error Display */}
                 {error && (
-                  <Alert className="border-red-200 bg-red-50">
-                    <AlertCircle className="h-4 w-4 text-red-600" />
-                    <AlertDescription className="text-red-700 text-sm">
-                      <div className="space-y-2">
-                        <p className="font-medium">Something went wrong:</p>
-                        <p>{error}</p>
-                        {/* Helpful suggestions based on error type */}
-                        {error.includes('CSV') && (
-                          <div className="mt-3 p-3 bg-red-100 rounded border border-red-200">
-                            <p className="text-xs text-red-800 mb-1 font-medium">💡 Quick fixes:</p>
-                            <ul className="text-xs text-red-700 space-y-1">
-                              <li>• Make sure your file has headers in the first row</li>
-                              <li>• Check that the file is properly formatted CSV</li>
-                              <li>• Try with a smaller file first (under 1MB)</li>
-                            </ul>
-                          </div>
-                        )}
-                        {error.includes('HTTP') && (
-                          <div className="mt-3 p-3 bg-red-100 rounded border border-red-200">
-                            <p className="text-xs text-red-800 mb-1 font-medium">💡 This might help:</p>
-                            <ul className="text-xs text-red-700 space-y-1">
-                              <li>• Try again in a few seconds (server might be busy)</li>
-                              <li>• Enable test mode to process less data</li>
-                              <li>• Check if all required fields are filled</li>
-                            </ul>
-                          </div>
-                        )}
-                        {error.includes('validation') && (
-                          <div className="mt-3 p-3 bg-red-100 rounded border border-red-200">
-                            <p className="text-xs text-red-800 mb-1 font-medium">💡 Please check:</p>
-                            <ul className="text-xs text-red-700 space-y-1">
-                              <li>• All required fields are completed</li>
-                              <li>• Input format matches the examples</li>
-                              <li>• File size is within limits</li>
-                            </ul>
-                          </div>
-                        )}
-                      </div>
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      <p className="font-medium mb-1">An error occurred:</p>
+                      {error}
                     </AlertDescription>
                   </Alert>
                 )}
@@ -1112,69 +1011,40 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
 
           {/* OUTPUT SECTION */}
           <div className="space-y-6">
-            <Card className="border border-gray-200">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-3 text-lg font-medium">
-                  <div className="p-2 bg-gray-100 rounded-lg">
-                    <BarChart3 className="w-4 h-4 text-gray-600" />
+            <Card className="border-border rounded-2xl bg-card shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-xl font-semibold">
+                  <div className="p-2.5 bg-secondary rounded-lg border border-border">
+                    <BarChart3 className="w-5 h-5 text-foreground" />
                   </div>
                   Results
                 </CardTitle>
-                <CardDescription className="text-sm">
-                  Your {config.title.toLowerCase()} results will appear here
-                </CardDescription>
               </CardHeader>
               <CardContent>
                 {/* Loading State */}
                 {isExecuting && (
                   <div className="py-12 space-y-6">
-                    <div className="text-center space-y-2">
-                      <div className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full">
-                        <div className="w-2 h-2 bg-gray-600 rounded-full animate-pulse"></div>
-                        <span className="text-gray-700 text-sm">
-                          Processing...
-                        </span>
-                      </div>
-                      <p className="text-gray-500 text-sm">
-                        {testMode ? 'Running in test mode' : 'Processing your request'}
+                    <div className="text-center">
+                      <p className="text-muted-foreground text-sm mb-4">
+                        {loadingPhrase}
                       </p>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                      <div className="w-full bg-secondary rounded-full h-2.5 overflow-hidden border border-border">
                         <div 
-                          className="h-full bg-gray-800 rounded-full transition-all duration-700 ease-out"
+                          className="h-full bg-primary rounded-full transition-all duration-700 ease-out"
                           style={{ 
                             width: `${Math.max(5, Math.min(100, loadingProgress))}%`
                           }}
                         >
                         </div>
                       </div>
-                      
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="text-gray-500">
+                      <div className="flex justify-between items-center text-xs text-muted-foreground mt-2">
+                        <span>
                           {Math.max(0, Math.round(loadingProgress))}%
                         </span>
-                        <span className="text-gray-500">
-                          {enableGoogleSearch ? 'With web search' : 'Standard processing'}
+                        <span>
+                          Est. {getEstimatedTime().min}-{getEstimatedTime().max}s
                         </span>
                       </div>
-                    </div>
-
-                    <div className="text-center">
-                      <div className="text-gray-600 text-sm">
-                        {loadingPhrase}
-                      </div>
-                    </div>
-
-                    <div className="text-center text-xs text-gray-400 space-y-1">
-                      {(() => {
-                        const { min, max } = getEstimatedTime();
-                        return (
-                          <p>Estimated time: {min}-{max} seconds</p>
-                        );
-                      })()}
-                      <p>Powered by Gemini 2.5 Flash{enableGoogleSearch && ' + Web Search'}</p>
                     </div>
                   </div>
                 )}
@@ -1182,22 +1052,19 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                 {/* Results Display */}
                 {showResults && (
                   <div className="space-y-3 animate-in fade-in duration-500">
-                    <div className="flex items-center gap-2 p-2 bg-gray-50 rounded text-gray-600 text-sm">
-                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                      Processing completed
-                    </div>
-                    
                     {renderResults()}
                   </div>
                 )}
 
                 {/* Empty State */}
                 {!isExecuting && !showResults && (
-                  <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-                    <div className="text-4xl mb-3">⚡</div>
-                    <h3 className="text-base font-medium text-gray-600 mb-1">Ready to process</h3>
-                    <p className="text-gray-500 text-center max-w-sm text-sm">
-                      Configure your settings and click "Run {config.title}" to see results.
+                  <div className="flex flex-col items-center justify-center py-20 text-muted-foreground text-center">
+                    <div className="p-4 bg-secondary rounded-full border border-border mb-4">
+                        <Sparkles className="w-8 h-8 text-foreground" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-foreground mb-2">Results will appear here</h3>
+                    <p className="max-w-xs text-sm">
+                      Configure your settings on the left and click "Run Workflow" to start.
                     </p>
                   </div>
                 )}

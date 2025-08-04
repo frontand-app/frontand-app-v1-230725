@@ -4,28 +4,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Link } from "react-router-dom";
 import { 
   ArrowRight, 
-  Sparkles, 
   Clock,
-  PlayCircle,
-  Globe,
-  Database,
-  Target,
-  Workflow
+  PlayCircle
 } from "lucide-react";
-import { getAllWorkflows, getWorkflowsByStatus } from "@/config/workflows";
+import { getWorkflowsByStatus } from "@/config/workflows";
 import AppCard from "@/components/AppCard";
 
 const Index = () => {
   const liveWorkflows = getWorkflowsByStatus(true);
   const comingWorkflows = getWorkflowsByStatus(false);
   const allWorkflows = [...liveWorkflows, ...comingWorkflows.slice(0, 3)]; // Show max 4 total
-
-  const stats = [
-    { value: `${getAllWorkflows().length}`, label: "Workflows", icon: Workflow },
-    { value: "50+", label: "Cloud Apps", icon: Globe },
-    { value: "10K+", label: "Rows Processed", icon: Database },
-    { value: "99.9%", label: "Uptime", icon: Target }
-  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -78,32 +66,19 @@ const Index = () => {
             </Button>
           </div>
         </div>
-
-        {/* Stats Row */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 max-w-3xl mx-auto">
-          {stats.map((stat, index) => (
-            <div key={index} className="text-center">
-              <div className="flex items-center justify-center gap-2 mb-1">
-                <stat.icon className="w-4 h-4 text-muted-foreground" />
-                <div className="text-xl font-semibold text-foreground">{stat.value}</div>
-              </div>
-              <div className="text-sm text-muted-foreground">{stat.label}</div>
-            </div>
-          ))}
-        </div>
       </section>
 
       {/* Hottest Apps Section */}
-      <section className="w-full max-w-6xl mx-auto px-6 py-12">
-        <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-          <div className="mb-6">
-            <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-800 rounded-full px-3 py-1 text-xs font-medium">
+      <section className="w-full max-w-6xl mx-auto px-6 py-16">
+        <div className="bg-card rounded-3xl border border-border p-8 shadow-lg">
+          <div className="mb-8">
+            <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-800 rounded-full px-4 py-2 text-sm font-medium">
               <span className="text-orange-600">🔥</span>
               Hottest Apps
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <AppCard
               title="LOOP OVER ROWS"
               category="Lead Scoring, Content Analysis"

@@ -962,7 +962,6 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
               <h1 className="text-3xl font-bold">{config.title}</h1>
-              <ChevronDown className="h-5 w-5" />
             </div>
           </div>
           <div className="flex items-center gap-6">
@@ -1040,79 +1039,13 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
           </div>
         )}
 
-        {/* Simple Expandable Explanation */}
-        {config.visualExplanation && (
-          <div className="mb-8 max-w-4xl mx-auto">
-            {/* Minimal Overview - Always Visible */}
-            <div className="flex items-center justify-between p-4 bg-secondary rounded-lg border border-border">
-                                  <div className="flex-1">
-                <p className="text-sm text-muted-foreground">
-                  {config.visualExplanation.overview || `${config.title} workflow`}
-                </p>
-                                  </div>
-              <div className="flex items-center gap-3">
-                {config.visualExplanation.estimatedTime && (
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    {config.visualExplanation.estimatedTime}
-                  </span>
-                )}
-                <button
-                  onClick={() => setShowExplanation(!showExplanation)}
-                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 px-2 py-1 rounded hover:bg-background/50"
-                >
-                  {showExplanation ? 'Hide details' : 'How it works'}
-                  <ChevronDown className={`h-3 w-3 transition-transform ${showExplanation ? 'rotate-180' : ''}`} />
-                </button>
-                                </div>
-            </div>
+        {/* How it works removed for simpler above-the-fold layout */}
 
-            {/* Expandable Details */}
-            {showExplanation && (
-              <div className="mt-3 border border-border rounded-lg bg-background">
-                <div className="p-6">
-                  <div className="space-y-6">
-                    {config.visualExplanation.steps.map((step, index) => (
-                      <div key={step.step} className="flex gap-4">
-                        {/* Simple step indicator */}
-                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-secondary flex items-center justify-center border border-border">
-                          <span className="font-medium text-foreground">{step.step}</span>
-                        </div>
-                        
-                        {/* Step content */}
-                                  <div className="flex-1">
-                          <h4 className="font-medium text-foreground mb-1">{step.title}</h4>
-                          <p className="text-sm text-muted-foreground mb-2">{step.description}</p>
-                          
-                          {step.example && (
-                            <p className="text-xs text-muted-foreground/80 italic">Example: {step.example}</p>
-                          )}
-                                  </div>
-                                </div>
-                    ))}
-                  </div>
-
-                  {/* Compact Use Cases */}
-                  {config.visualExplanation.useCases && config.visualExplanation.useCases.length > 0 && (
-                    <div className="mt-6 pt-6 border-t border-border">
-                      <p className="text-sm font-medium text-foreground mb-3">Common uses:</p>
-                      <p className="text-sm text-muted-foreground leading-relaxed">
-                        {config.visualExplanation.useCases.slice(0, 3).join(' • ')}
-                        {config.visualExplanation.useCases.length > 3 && ' • ...'}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-                    )}
-                  </div>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto items-stretch">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto items-stretch content-stretch">
           {/* INPUT SECTION */}
           <div className="space-y-6">
-            <Card className="border-2 border-primary rounded-2xl">
-              <CardContent className="p-6">
+            <Card className="border-2 border-primary rounded-2xl h-full">
+              <CardContent className="p-6 h-full flex flex-col">
                 <div className="bg-primary text-primary-foreground rounded-lg px-3 py-1 text-sm font-medium inline-block mb-6">
                   YOUR INPUT
                 </div>
@@ -1251,7 +1184,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                 </div>
 
                   {/* Run Button */}
-                  <div className="flex items-center gap-3 pt-4">
+                  <div className="flex items-center gap-3 pt-4 mt-auto">
                 <Button
                   onClick={handleExecute}
                   disabled={isExecuting}
@@ -1277,8 +1210,8 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
 
           {/* OUTPUT SECTION */}
           <div className="space-y-6">
-            <Card className="border-2 border-border rounded-2xl">
-              <CardContent className="p-6">
+            <Card className="border-2 border-border rounded-2xl h-full">
+              <CardContent className="p-6 h-full flex flex-col">
                 <div className="flex items-center justify-between mb-6">
                   <div className="bg-muted text-muted-foreground rounded-lg px-3 py-1 text-sm font-medium">
                     WORKFLOW OUTPUT

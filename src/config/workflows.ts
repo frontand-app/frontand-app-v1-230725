@@ -69,7 +69,7 @@ Mike Chen,mike@startupxyz.com,StartupXYZ,startupxyz.com`
       }
     ],
     
-    endpoint: 'https://techrocketlist--loop-over-rows-frontand-fastapi-app.modal.run/process',
+    endpoint: 'https://scaile--loop-over-rows-fastapi-app.modal.run/process',
     supportsGoogleSearch: true,
     supportsTestMode: true,
 

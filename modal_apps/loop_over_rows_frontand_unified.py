@@ -77,8 +77,21 @@ async def process_unified(body: Dict[str, Any]) -> Any:
     # Branch by mode
     if mode == "keyword-kombat":
         req = KeywordKombatRequest(**body)
-        results = await _process_keyword_kombat(req.keywords, req.company_url, req.enable_google_search, req.test_mode)
-        return ProcessResponse(results=results, processing_time=time.time() - start, items_processed=len(results))
+        # TEMP: proxy to stable Kombat service until internal mode is hardened
+        kombat_url = "https://scaile--keyword-kombat-frontand-fastapi-app.modal.run/process"
+        try:
+            proxied = requests.post(kombat_url, json={
+                "keywords": req.keywords,
+                "company_url": req.company_url,
+                "keyword_variable": req.keyword_variable,
+                "enable_google_search": req.enable_google_search,
+                "test_mode": req.test_mode,
+            }, timeout=300)
+            if proxied.status_code != 200:
+                raise HTTPException(status_code=proxied.status_code, detail=f"Kombat upstream error: {proxied.text}")
+            return proxied.json()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Keyword Kombat processing failed: {e}")
 
     # Default: freestyle → proxy to existing Loop Over Rows engine (single backend endpoint)
     try:

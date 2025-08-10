@@ -136,6 +136,8 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
   const [dragActive, setDragActive] = useState(false);
   const [openTemplates, setOpenTemplates] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState('');
+  const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
+  const [selectedCsvColumns, setSelectedCsvColumns] = useState<string[]>([]);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
   const handleMockModeToggle = (isMockMode: boolean) => {
@@ -298,6 +300,11 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
       const content = e.target?.result as string;
       handleInputChange(fieldId, content);
       setUploadedFile(file);
+      // derive headers preview
+      const firstLine = content.split('\n')[0] || '';
+      const headers = firstLine.split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+      setCsvHeaders(headers);
+      setSelectedCsvColumns(headers); // default: all columns selected
       setError(null);
     };
     reader.onerror = () => {
@@ -401,19 +408,24 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
           throw new Error('Invalid CSV data format');
         }
 
+        // Filter columns based on user selection (default is all)
+        const activeHeaders = selectedCsvColumns.length > 0 ? selectedCsvColumns : parsedData.headers;
+        const headerIndices = activeHeaders.map(h => parsedData.headers.indexOf(h)).filter(i => i >= 0);
+
         // Format data for Modal API - convert CSV to row-keyed array format
         const rowsToProcess = testMode ? parsedData.rows.slice(0, 1) : parsedData.rows;
-        
+
         // Convert rows to row-keyed array format as expected by Modal
         const dataDict: Record<string, string[]> = {};
         rowsToProcess.forEach((row, index) => {
           const rowKey = `row_${index + 1}`;
-          dataDict[rowKey] = row;  // Send the row as an array directly
+          const filteredRow = headerIndices.map(i => row[i]);
+          dataDict[rowKey] = filteredRow;
         });
         
         requestData = {
           data: dataDict,
-          headers: parsedData.headers,
+          headers: activeHeaders,
           prompt: inputValues.prompt.trim(),
           batch_size: 10,
           enable_google_search: enableGoogleSearch,
@@ -936,16 +948,18 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
         {/* Mode picker for loop-over-rows */}
         {config.id === 'loop-over-rows' && (config as any).modes && (
           <div className="mb-4">
-            <div className="inline-flex items-center gap-2 bg-secondary rounded-full p-1">
-              {((config as any).modes || []).map((m: any) => (
-                <button
-                  key={m.id}
-                  onClick={() => setMode(m.id)}
-                  className={`px-3 py-1 text-sm rounded-full transition ${mode === m.id ? 'bg-foreground text-background' : 'text-foreground hover:bg-background'}`}
-                >
-                  {m.label}
-                </button>
-              ))}
+            <div className="inline-flex items-center gap-3">
+              <span className="text-sm text-muted-foreground">Mode</span>
+              <Select value={mode} onValueChange={(v) => setMode(v)}>
+                <SelectTrigger className="w-[240px]">
+                  <SelectValue placeholder="Select a mode" />
+                </SelectTrigger>
+                <SelectContent className="max-h-72 overflow-auto">
+                  {((config as any).modes || []).map((m: any) => (
+                    <SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         )}
@@ -1094,10 +1108,61 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                           className="min-h-[100px] resize-none"
                         />
                       </>
-                    ) : (
-                      // freestyle default textarea (for csv_data is elsewhere)
-                      <></>
-                    )}
+            ) : (
+              // freestyle: CSV upload + column selector + prompt textarea
+              <div className="space-y-4">
+                <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+                  <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+                  <p className="font-medium text-foreground mb-1">Upload a CSV file up to 10 MB</p>
+                  <p className="text-sm text-muted-foreground">First row should contain column headers</p>
+                  <div className="mt-3">
+                    <Button variant="outline" size="sm" onClick={() => {
+                      const input = document.createElement('input');
+                      input.type = 'file';
+                      input.accept = '.csv';
+                      input.onchange = (e) => {
+                        const file = (e.target as HTMLInputElement).files?.[0];
+                        if (file) processFile(file, 'csv_data');
+                      };
+                      input.click();
+                    }}>Choose File</Button>
+                  </div>
+                </div>
+
+                {csvHeaders.length > 0 && (
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-2 block">Columns to include</label>
+                    <div className="flex flex-wrap gap-2">
+                      {csvHeaders.map((h) => {
+                        const checked = selectedCsvColumns.includes(h);
+                        return (
+                          <button
+                            key={h}
+                            type="button"
+                            onClick={() => {
+                              setSelectedCsvColumns((prev) => checked ? prev.filter(x => x !== h) : [...prev, h]);
+                            }}
+                            className={`px-3 py-1.5 text-xs rounded-full border ${checked ? 'bg-foreground text-background border-foreground' : 'bg-background text-foreground border-border'}`}
+                          >
+                            {h}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">Task (Prompt)</label>
+                  <Textarea
+                    placeholder="Describe the task for each row..."
+                    value={inputValues.prompt || ''}
+                    onChange={(e) => handleInputChange('prompt', e.target.value)}
+                    className="min-h-[140px] resize-none"
+                  />
+                </div>
+              </div>
+            )}
                   </div>
 
                   {/* Step 2: Input Fields */}

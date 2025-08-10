@@ -1004,7 +1004,11 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                         <div>
                           <label className="text-sm font-medium text-foreground mb-2 block">Output schema (JSON instruction)</label>
                           <Textarea
-                            placeholder={`## OUTPUT\n{\n  "Umsatz": {"wert": "...", "quelle": "..."},\n  "EBIT": {"wert": "...", "quelle": "..."}\n}\n\n## TASK\nBeschreibe hier deine Aufgabe...`}
+                            placeholder={`{
+  "name": "...",
+  "email_domain": "...",
+  "company_industry": "..."
+}`}
                             value={inputValues.output_schema || ''}
                             onChange={(e) => handleInputChange('output_schema', e.target.value)}
                             className="min-h-[140px] resize-none"

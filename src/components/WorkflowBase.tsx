@@ -18,6 +18,7 @@ import { Loader2, Play, AlertCircle, Upload, FileText, Search, Globe, BarChart3,
 import CsvPlaintextInput from '@/components/shared/CsvPlaintextInput';
 import MockPreview from '@/components/shared/MockPreview';
 import GoogleSearchToggle from '@/components/shared/GoogleSearchToggle';
+import ColumnSelectorChips from '@/components/shared/ColumnSelectorChips';
 import * as LucideIcons from 'lucide-react';
 import { TableOutput, TableData } from '@/components/TableOutput';
 import { cn } from "@/lib/utils";
@@ -1003,26 +1004,11 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                 )}
 
                 {csvHeaders.length > 0 && (
-                        <div>
-                    <label className="text-sm font-medium text-foreground mb-2 block">Columns to include</label>
-                    <div className="flex flex-wrap gap-2">
-                      {csvHeaders.map((h) => {
-                        const checked = selectedCsvColumns.includes(h);
-                        return (
-                          <button
-                            key={h}
-                            type="button"
-                            onClick={() => {
-                              setSelectedCsvColumns((prev) => checked ? prev.filter(x => x !== h) : [...prev, h]);
-                            }}
-                            className={`px-3 py-1.5 text-xs rounded-full border ${checked ? 'bg-foreground text-background border-foreground' : 'bg-background text-foreground border-border'}`}
-                          >
-                            {h}
-                          </button>
-                        );
-                      })}
-                        </div>
-                      </div>
+                  <ColumnSelectorChips
+                    headers={csvHeaders}
+                    selected={selectedCsvColumns}
+                    onToggle={(_, next) => setSelectedCsvColumns(next)}
+                  />
                 )}
 
                 <div>

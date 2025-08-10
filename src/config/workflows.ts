@@ -69,7 +69,7 @@ Mike Chen,mike@startupxyz.com,StartupXYZ,startupxyz.com`
       }
     ],
     
-    endpoint: 'https://scaile--loop-over-rows-fastapi-app.modal.run/process',
+    endpoint: 'https://techrocketlist--loop-over-rows-frontand-fastapi-app.modal.run/process',
     supportsGoogleSearch: true,
     supportsTestMode: true,
 
@@ -78,7 +78,7 @@ Mike Chen,mike@startupxyz.com,StartupXYZ,startupxyz.com`
     // Temporary per-mode endpoint override until backend is unified
     modes: [
       { id: 'freestyle', label: 'Freestyle' },
-      { id: 'keyword-kombat', label: 'Keyword Kombat', endpointOverride: 'https://scaile--keyword-kombat-frontand-fastapi-app.modal.run/process' }
+      { id: 'keyword-kombat', label: 'Keyword Kombat' }
     ],
     defaultModeId: 'freestyle',
     

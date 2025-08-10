@@ -481,8 +481,8 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
       console.log('Sending request to:', config.endpoint, requestData);
 
       // Endpoint: allow per-mode override while we unify backend
-      const endpointOverride = (config as any).modes?.find((m: any) => m.id === mode)?.endpointOverride;
-      const endpointToUse = endpointOverride || config.endpoint;
+      // Single unified endpoint handles all modes
+      const endpointToUse = config.endpoint;
       const response = await fetch(endpointToUse, {
         method: 'POST',
         headers: {

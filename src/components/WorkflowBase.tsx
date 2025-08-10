@@ -151,6 +151,22 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
       setUploadedFile({ name: 'company_list_august2025.csv (35KB)' } as File);
       setStep(2);
       setError(null);
+    } else if (isMockMode && (config.id === 'loop-over-rows' && mode === 'freestyle')) {
+      const mockCsv = 'name,email,website\nAlice,alice@example.com,https://acme.com\nBob,bob@example.com,https://example.org';
+      setInputValues({
+        csv_data: mockCsv,
+        prompt: 'For each row, return JSON with: name, email_domain, company_industry (guess).',
+        output_schema: `## OUTPUT\n{\n  "name": "...",\n  "email_domain": "...",\n  "company_industry": "..."\n}`
+      });
+      try {
+        const parsed = parseCSVData(mockCsv);
+        if (parsed) {
+          setCsvHeaders(parsed.headers);
+          setSelectedCsvColumns(parsed.headers);
+        }
+      } catch {}
+      setUploadedFile({ name: 'sample.csv' } as File);
+      setError(null);
     } else {
       setInputValues({});
       setUploadedFile(null);
@@ -158,6 +174,20 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
       setError(null);
     }
   };
+
+  // Keep column chips in sync when user pastes CSV instead of uploading a file
+  useEffect(() => {
+    try {
+      if (config.id === 'loop-over-rows' && mode === 'freestyle' && inputValues.csv_data) {
+        const parsed = parseCSVData(inputValues.csv_data);
+        if (parsed) {
+          setCsvHeaders(parsed.headers);
+          if (selectedCsvColumns.length === 0) setSelectedCsvColumns(parsed.headers);
+        }
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inputValues.csv_data, mode]);
 
   // Dynamic loading phrases based on workflow
   const getLoadingPhrases = () => {
@@ -414,7 +444,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
 
         // Format data for Modal API - convert CSV to row-keyed array format
         const rowsToProcess = testMode ? parsedData.rows.slice(0, 1) : parsedData.rows;
-
+        
         // Convert rows to row-keyed array format as expected by Modal
         const dataDict: Record<string, string[]> = {};
         rowsToProcess.forEach((row, index) => {
@@ -427,6 +457,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
           data: dataDict,
           headers: activeHeaders,
           prompt: inputValues.prompt.trim(),
+          output_schema: inputValues.output_schema,
           batch_size: 10,
           enable_google_search: enableGoogleSearch,
           mode: 'freestyle'
@@ -976,11 +1007,11 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
             />
             <span className="font-medium text-foreground">Mock mode</span>
             <Info className="h-4 w-4 text-muted-foreground" />
-        </div>
+                  </div>
         )}
 
         {/* Google Search Toggle for keyword-kombat mode */}
-        {config.id === 'loop-over-rows' && mode === 'keyword-kombat' && (
+        {config.id === 'loop-over-rows' && (mode === 'keyword-kombat') && (
           <div className="flex items-center gap-3 mb-8">
             <Switch 
               checked={enableGoogleSearch} 
@@ -994,17 +1025,31 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
             </div>
         </div>
         )}
+        {config.id === 'loop-over-rows' && (mode === 'freestyle') && (
+          <div className="flex items-center gap-3 mb-8">
+            <Switch 
+              checked={enableGoogleSearch} 
+              onCheckedChange={setEnableGoogleSearch}
+              className="data-[state=checked]:bg-primary"
+            />
+            <span className="font-medium text-foreground">Google Search</span>
+            <div className="flex items-center gap-1">
+              <Search className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Optional web enrichment</span>
+            </div>
+          </div>
+        )}
 
         {/* Simple Expandable Explanation */}
         {config.visualExplanation && (
           <div className="mb-8 max-w-4xl mx-auto">
             {/* Minimal Overview - Always Visible */}
             <div className="flex items-center justify-between p-4 bg-secondary rounded-lg border border-border">
-              <div className="flex-1">
+                                  <div className="flex-1">
                 <p className="text-sm text-muted-foreground">
                   {config.visualExplanation.overview || `${config.title} workflow`}
                 </p>
-                  </div>
+                                  </div>
               <div className="flex items-center gap-3">
                 {config.visualExplanation.estimatedTime && (
                   <span className="text-xs text-muted-foreground flex items-center gap-1">
@@ -1019,7 +1064,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                   {showExplanation ? 'Hide details' : 'How it works'}
                   <ChevronDown className={`h-3 w-3 transition-transform ${showExplanation ? 'rotate-180' : ''}`} />
                 </button>
-              </div>
+                                </div>
             </div>
 
             {/* Expandable Details */}
@@ -1108,7 +1153,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                           className="min-h-[100px] resize-none"
                         />
                       </>
-            ) : (
+                    ) : (
               // freestyle: CSV upload + column selector + prompt textarea
               <div className="space-y-4">
                 <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
@@ -1126,11 +1171,11 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                       };
                       input.click();
                     }}>Choose File</Button>
-                  </div>
+                    </div>
                 </div>
 
                 {csvHeaders.length > 0 && (
-                  <div>
+                        <div>
                     <label className="text-sm font-medium text-foreground mb-2 block">Columns to include</label>
                     <div className="flex flex-wrap gap-2">
                       {csvHeaders.map((h) => {
@@ -1148,8 +1193,8 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                           </button>
                         );
                       })}
-                    </div>
-                  </div>
+                        </div>
+                      </div>
                 )}
 
                 <div>
@@ -1161,9 +1206,19 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                     className="min-h-[140px] resize-none"
                   />
                 </div>
-              </div>
-            )}
-                  </div>
+
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">Output schema (JSON instruction)</label>
+                  <Textarea
+                    placeholder={`## OUTPUT\n{\n  "Umsatz": {"wert": "...", "quelle": "..."},\n  "EBIT": {"wert": "...", "quelle": "..."}\n}\n\n## TASK\nBeschreibe hier deine Aufgabe...`}
+                    value={inputValues.output_schema || ''}
+                    onChange={(e) => handleInputChange('output_schema', e.target.value)}
+                    className="min-h-[140px] resize-none"
+                  />
+                </div>
+                    </div>
+                  )}
+                </div>
 
                   {/* Step 2: Input Fields */}
                         <div>

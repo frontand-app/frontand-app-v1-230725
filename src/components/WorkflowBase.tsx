@@ -160,7 +160,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
       setInputValues({
         csv_data: mockCsv,
         prompt: 'For each row, return JSON with: name, email_domain, company_industry (guess).',
-        output_schema: `## OUTPUT\n{\n  "name": "...",\n  "email_domain": "...",\n  "company_industry": "..."\n}`
+        output_schema: ''
       });
       try {
         const parsed = parseCSVData(mockCsv);
@@ -1006,11 +1006,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                         <div>
                           <label className="text-sm font-medium text-foreground mb-2 block">Output schema (JSON instruction)</label>
                           <Textarea
-                            placeholder={`{
-  "name": "...",
-  "email_domain": "...",
-  "company_industry": "..."
-}`}
+                            placeholder={`{\n  "column_name": "value to extract",\n  "another_field": "..."\n}\n\nTip: You can leave this empty. We'll infer JSON by analyzing the first row.`}
                             value={inputValues.output_schema || ''}
                             onChange={(e) => handleInputChange('output_schema', e.target.value)}
                             className="min-h-[140px] resize-none"
@@ -1023,7 +1019,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                   {/* Additional inputs for specific modes */}
                         <div className="mt-6 pt-4 border-t border-border">
                     <div className="space-y-4">
-                      {config.id === 'loop-over-rows' && mode === 'keyword-kombat' && (
+                      {config.id === 'loop-over-rows' && mode === 'keyword-kombat' && uploadedFile && (
                       <div>
                         <label className="text-sm text-foreground mb-2 block">Map keyword variable</label>
                         <Select value={inputValues.keyword_variable || ''} onValueChange={(value) => handleInputChange('keyword_variable', value)}>

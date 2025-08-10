@@ -57,7 +57,7 @@ const CsvPlaintextInput: React.FC<CsvPlaintextInputProps> = ({
         <TabsContent value="text" className="mt-2">
           <Textarea
             id={id}
-            placeholder={placeholder}
+            placeholder={placeholder || 'Paste CSV with headers in first row...'}
             value={value}
             onChange={(e) => onChange(e.target.value)}
             className="min-h-[96px] resize-none font-mono text-sm"

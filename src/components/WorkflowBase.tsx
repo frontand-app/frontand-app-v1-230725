@@ -15,6 +15,9 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Play, AlertCircle, Upload, FileText, Search, Globe, BarChart3, Sparkles, File, CheckCircle2, X, ChevronDown, Check, Clock, Lightbulb, Info, ArrowRight, AlertTriangle, Shield, TrendingUp, Heart, Eye, ArrowDown } from 'lucide-react';
+import CsvPlaintextInput from '@/components/shared/CsvPlaintextInput';
+import MockPreview from '@/components/shared/MockPreview';
+import GoogleSearchToggle from '@/components/shared/GoogleSearchToggle';
 import * as LucideIcons from 'lucide-react';
 import { TableOutput, TableData } from '@/components/TableOutput';
 import { cn } from "@/lib/utils";
@@ -638,112 +641,21 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
         
       case 'csv':
         return (
-          <div className="space-y-3">
-            <div className="flex gap-2 text-xs text-gray-500 mb-2">
-              <button 
-                type="button"
-                onClick={() => {/* Switch to text input - textarea is always visible */}}
-                className="text-gray-600 hover:text-gray-800"
-              >
-                Text Input
-              </button>
-              <span className="text-gray-300">|</span>
-              <span className="text-gray-600">File Upload</span>
-            </div>
-            
-            {/* CSV Textarea Input */}
-            <Textarea
-              id={field.id}
-              placeholder={field.placeholder}
-              value={value}
-              onChange={(e) => {
-                handleInputChange(field.id, e.target.value);
-                setUploadedFile(null); // Clear uploaded file when typing
-              }}
-              className="min-h-[120px] resize-none focus:ring-2 focus:ring-gray-300 border-gray-200 font-mono text-sm"
-            />
-
-            {/* CSV File Upload */}
-            <div className="relative">
-              <div 
-                className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors cursor-pointer ${
-                  dragActive 
-                    ? 'border-gray-400 bg-gray-50' 
-                    : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
-                }`}
-                onDragEnter={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setDragActive(true);
-                }}
-                onDragLeave={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setDragActive(false);
-                }}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setDragActive(false);
-                  
-                  const files = e.dataTransfer.files;
-                  if (files?.[0]) {
-                    processFile(files[0], field.id);
-                  }
-                }}
-                onClick={() => {
-                  const input = document.createElement('input');
-                  input.type = 'file';
-                  input.accept = '.csv';
-                  input.onchange = (e) => {
-                    const file = (e.target as HTMLInputElement).files?.[0];
-                    if (file) {
-                      processFile(file, field.id);
-                    }
-                  };
-                  input.click();
-                }}
-              >
-                <Upload className="w-6 h-6 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm text-gray-600">
-                  {uploadedFile ? 'Click to replace file' : 'Drop your CSV file here or click to upload'}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Supports CSV files up to 10MB
-                </p>
-              </div>
-
-              {uploadedFile && (
-                <div className="flex items-center justify-between p-2 bg-gray-50 rounded border mt-2">
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-gray-600" />
-                    <span className="text-sm text-gray-700">{uploadedFile.name}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setUploadedFile(null);
-                      handleInputChange(field.id, '');
-                    }}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {value && (
-              <div className="text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded border">
-                <FileText className="w-4 h-4 inline mr-2" />
-                {value.split('\n').length} lines detected
-              </div>
-            )}
-          </div>
+          <CsvPlaintextInput
+            id={field.id}
+            value={value}
+            placeholder={field.placeholder}
+            uploadedFileName={uploadedFile?.name || null}
+            onChange={(text) => {
+              handleInputChange(field.id, text);
+              setUploadedFile(null);
+            }}
+            onFilePicked={(file) => processFile(file, field.id)}
+            onClearFile={() => {
+              setUploadedFile(null);
+              handleInputChange(field.id, '');
+            }}
+          />
         );
         
       case 'select':
@@ -1023,17 +935,12 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                 </div>
 
                 {config.id === 'loop-over-rows' && (
-                  <div className="flex items-center gap-3 mb-4">
-                    <Switch
+                  <div className="mb-4">
+                    <GoogleSearchToggle
                       checked={enableGoogleSearch}
-                      onCheckedChange={setEnableGoogleSearch}
-                      className="data-[state=checked]:bg-primary"
+                      onChange={setEnableGoogleSearch}
+                      isKeywordMode={mode === 'keyword-kombat'}
                     />
-                    <span className="font-medium text-foreground">Google Search</span>
-                    <div className="flex items-center gap-1">
-                      <Search className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">{mode === 'keyword-kombat' ? 'Enhanced company research' : 'Optional web enrichment'}</span>
-                    </div>
                   </div>
                 )}
 
@@ -1046,18 +953,13 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                     </h3>
                     
                     {config.id === 'loop-over-rows' && mode === 'keyword-kombat' && step >= 2 && uploadedFile ? (
-                      <div className="space-y-3 bg-secondary/40 border border-border rounded p-3">
-                        <div className="text-sm font-medium text-foreground">Preview</div>
-                        <div className="space-y-1 text-sm text-muted-foreground">
+                      <MockPreview filename={uploadedFile.name}>
+                        <div className="space-y-1 text-sm">
                           {inputValues.keywords.split('\n').map((keyword: string, idx: number) => (
                             <div key={idx}>• {keyword}</div>
                           ))}
                         </div>
-                        <div className="flex items-center justify-between pt-3 border-t">
-                          <span className="text-sm text-foreground">✓ {uploadedFile.name}</span>
-                          <Button variant="outline" size="sm">Upload new</Button>
-                        </div>
-                      </div>
+                      </MockPreview>
                     ) : config.id === 'loop-over-rows' && mode === 'keyword-kombat' ? (
                       <>
                         <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
@@ -1095,14 +997,9 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                 </div>
 
                 {testMode && inputValues.csv_data && (
-                  <div className="text-sm bg-secondary/40 border border-border rounded p-3">
-                    <div className="font-medium text-foreground mb-1">Preview</div>
-                    <pre className="overflow-auto whitespace-pre-wrap text-muted-foreground">{inputValues.csv_data}</pre>
-                    <div className="pt-2 mt-2 border-t text-foreground flex items-center justify-between">
-                      <span className="text-sm">✓ {uploadedFile?.name || 'sample.csv'}</span>
-                      <Button variant="outline" size="sm">Upload new</Button>
-                    </div>
-                  </div>
+                  <MockPreview filename={uploadedFile?.name || 'sample.csv'}>
+                    <pre className="overflow-auto whitespace-pre-wrap">{inputValues.csv_data}</pre>
+                  </MockPreview>
                 )}
 
                 {csvHeaders.length > 0 && (

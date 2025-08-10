@@ -464,7 +464,8 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
           output_schema: inputValues.output_schema,
           batch_size: 10,
           enable_google_search: enableGoogleSearch,
-          mode: 'freestyle'
+          mode: 'freestyle',
+          ...(inputValues.webhook_url ? { config: { webhook_url: inputValues.webhook_url } } : {})
         };
       } else if (config.id === 'loop-over-rows' && mode === 'keyword-kombat' && inputValues.keywords && inputValues.company_url) {
         // Keyword Kombat mode
@@ -480,7 +481,8 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
           company_url: inputValues.company_url,
           keyword_variable: inputValues.keyword_variable || 'keyword',
           test_mode: testMode,
-          enable_google_search: enableGoogleSearch
+          enable_google_search: enableGoogleSearch,
+          ...(inputValues.webhook_url ? { config: { webhook_url: inputValues.webhook_url } } : {})
         };
       } else if (config.id === 'crawl4imprint' && inputValues.websites) {
         // Special handling for crawl4imprint workflow

@@ -42,6 +42,11 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/flows" element={<FlowLibrary />} />
               <Route path="/flows/:id" element={<WorkflowRunner />} />
+              {/* Legacy route for keyword-kombat → redirect to loop-over-rows with mode */}
+              <Route
+                path="/flows/keyword-kombat"
+                element={<Navigate to="/flows/loop-over-rows?mode=keyword-kombat" replace />}
+              />
               <Route path="/workflows/:id" element={<WorkflowRedirect />} />
               <Route path="/dashboard" element={<Dashboard />} />
                             <Route path="/executions" element={<ExecutionDashboard />} />

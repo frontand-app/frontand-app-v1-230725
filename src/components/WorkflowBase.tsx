@@ -110,6 +110,10 @@ interface WorkflowBaseProps {
 }
 
 const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
+  // Mode state (for apps that support modes, e.g., loop-over-rows)
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialMode = (urlParams.get('mode') || (config as any).defaultModeId || 'freestyle');
+  const [mode, setMode] = useState<string>(initialMode);
   // Core state
   const [isExecuting, setIsExecuting] = useState(false);
   const [results, setResults] = useState<any>(null);
@@ -133,7 +137,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
 
   const handleMockModeToggle = (isMockMode: boolean) => {
     setTestMode(isMockMode);
-    if (isMockMode && config.id === 'keyword-kombat') {
+    if (isMockMode && (config.id === 'loop-over-rows' && mode === 'keyword-kombat')) {
       setInputValues({
         keywords: 'music\nstreaming\nsubscription',
         company_url: 'https://www.spotify.com/',
@@ -191,7 +195,8 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
   // Get item count for processing estimate
   const getItemCount = () => {
     // For CSV workflows, count rows
-    const csvField = config.inputs.find(field => field.type === 'csv');
+    const activeInputs = getActiveInputs();
+    const csvField = activeInputs.find(field => field.type === 'csv');
     if (csvField && inputValues[csvField.id]) {
       const lines = inputValues[csvField.id].trim().split('\n');
       return testMode ? 1 : Math.max(0, lines.length - 1); // Subtract header
@@ -300,7 +305,8 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
 
   // Validate inputs
   const validateInputs = (): string | null => {
-    for (const field of config.inputs) {
+    const activeInputs = getActiveInputs();
+    for (const field of activeInputs) {
       if (field.required && !inputValues[field.id]) {
         return `${field.label} is required`;
       }
@@ -349,7 +355,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
   // Handle execution
   const handleExecute = async () => {
     // Handle mock mode first for keyword-kombat, as it fills the form
-    if (config.id === 'keyword-kombat' && testMode && step === 2) {
+    if (config.id === 'loop-over-rows' && mode === 'keyword-kombat' && testMode && step === 2) {
       setResults([
         { keyword: "music", score: "0.8", reasoning: "Music is a core focus of the platform, central to its..." },
         { keyword: "streaming", score: "0.95", reasoning: "The company is explicitly described as a streamin..." },
@@ -381,11 +387,12 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
       // Prepare request data with special handling for CSV workflows
       let requestData: any = {
         test_mode: testMode,
-        enable_google_search: enableGoogleSearch
+        enable_google_search: enableGoogleSearch,
+        mode: config.id === 'loop-over-rows' ? mode : undefined
       };
 
-      // Special handling for loop-over-rows workflow (CSV processing)
-      if (config.id === 'loop-over-rows' && inputValues.csv_data && inputValues.prompt) {
+      // Special handling for loop-over-rows freestyle (CSV + prompt)
+      if (config.id === 'loop-over-rows' && mode === 'freestyle' && inputValues.csv_data && inputValues.prompt) {
         const parsedData = parseCSVData(inputValues.csv_data);
         if (!parsedData) {
           throw new Error('Invalid CSV data format');
@@ -406,6 +413,21 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
           headers: parsedData.headers,
           prompt: inputValues.prompt.trim(),
           batch_size: 10,
+          enable_google_search: enableGoogleSearch
+        };
+      } else if (config.id === 'loop-over-rows' && mode === 'keyword-kombat' && inputValues.keywords && inputValues.company_url) {
+        // Keyword Kombat mode
+        const lines = inputValues.keywords.trim().split('\n').filter((l: string) => l.trim().length > 0);
+        const dataDict: Record<string, string[]> = {};
+        const headers = ['Keyword'];
+        (testMode ? lines.slice(0, 3) : lines).forEach((kw: string, index: number) => {
+          dataDict[`row_${index + 1}`] = [kw.trim()];
+        });
+        requestData = {
+          keywords: lines,
+          company_url: inputValues.company_url,
+          keyword_variable: inputValues.keyword_variable || 'keyword',
+          test_mode: testMode,
           enable_google_search: enableGoogleSearch
         };
       } else if (config.id === 'crawl4imprint' && inputValues.websites) {
@@ -455,7 +477,10 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
 
       console.log('Sending request to:', config.endpoint, requestData);
 
-      const response = await fetch(config.endpoint, {
+      // Endpoint: allow per-mode override while we unify backend
+      const endpointOverride = (config as any).modes?.find((m: any) => m.id === mode)?.endpointOverride;
+      const endpointToUse = endpointOverride || config.endpoint;
+      const response = await fetch(endpointToUse, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -493,6 +518,18 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
       setLoadingProgress(0);
       setLoadingPhrase('');
     }
+  };
+
+  // Determine inputs based on mode for loop-over-rows
+  const getActiveInputs = (): WorkflowField[] => {
+    if (config.id !== 'loop-over-rows') return config.inputs;
+    if (mode === 'freestyle') return config.inputs;
+    // keyword-kombat inputs
+    return [
+      { id: 'keywords', label: 'Keywords', type: 'csv', required: true, placeholder: 'music\nstreaming\nsubscription', helpText: 'Upload a file or paste a list with the keywords you would like to rank*' },
+      { id: 'company_url', label: 'Company URL', type: 'url', required: true, placeholder: 'https://www.spotify.com/' },
+      { id: 'keyword_variable', label: 'Map keyword variable', type: 'select', required: true, options: [{ id: 'keyword', label: 'keyword', value: 'keyword' }] }
+    ];
   };
 
   // Render input field
@@ -890,6 +927,22 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
             </div>
           </div>
         </div>
+        {/* Mode picker for loop-over-rows */}
+        {config.id === 'loop-over-rows' && (config as any).modes && (
+          <div className="mb-4">
+            <div className="inline-flex items-center gap-2 bg-secondary rounded-full p-1">
+              {((config as any).modes || []).map((m: any) => (
+                <button
+                  key={m.id}
+                  onClick={() => setMode(m.id)}
+                  className={`px-3 py-1 text-sm rounded-full transition ${mode === m.id ? 'bg-foreground text-background' : 'text-foreground hover:bg-background'}`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         <p className="text-muted-foreground mb-6">
             {config.description}
           </p>
@@ -903,6 +956,22 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
             />
             <span className="font-medium text-foreground">Mock mode</span>
             <Info className="h-4 w-4 text-muted-foreground" />
+        </div>
+        )}
+
+        {/* Google Search Toggle for keyword-kombat mode */}
+        {config.id === 'loop-over-rows' && mode === 'keyword-kombat' && (
+          <div className="flex items-center gap-3 mb-8">
+            <Switch 
+              checked={enableGoogleSearch} 
+              onCheckedChange={setEnableGoogleSearch}
+              className="data-[state=checked]:bg-primary"
+            />
+            <span className="font-medium text-foreground">Google Search</span>
+            <div className="flex items-center gap-1">
+              <Search className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Enhanced company research</span>
+            </div>
         </div>
         )}
 
@@ -986,10 +1055,12 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                 <div className="space-y-6">
                         <div>
                     <h3 className="font-medium text-foreground mb-4">
-                      1. {step >= 2 ? "Upload your CSV file with the keywords you would like to rank*" : "Upload a file or paste a list with the keywords you would like to rank*"}
+                      {config.id === 'loop-over-rows' && mode === 'keyword-kombat'
+                        ? (step >= 2 ? 'Upload your CSV file with the keywords you would like to rank*' : 'Upload a file or paste a list with the keywords you would like to rank*')
+                        : 'Upload CSV data'}
                     </h3>
                     
-                    {step >= 2 && uploadedFile ? (
+                    {config.id === 'loop-over-rows' && mode === 'keyword-kombat' && step >= 2 && uploadedFile ? (
                       <div className="space-y-3">
                         <div className="text-sm font-medium text-foreground">Keyword</div>
                         <div className="space-y-1 text-sm text-muted-foreground">
@@ -1002,7 +1073,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                           <Button variant="outline" size="sm">Upload new</Button>
                       </div>
                     </div>
-                    ) : (
+                    ) : config.id === 'loop-over-rows' && mode === 'keyword-kombat' ? (
                       <>
                         <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
                           <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-4" />
@@ -1017,6 +1088,9 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                           className="min-h-[100px] resize-none"
                         />
                       </>
+                    ) : (
+                      // freestyle default textarea (for csv_data is elsewhere)
+                      <></>
                     )}
                   </div>
 
@@ -1025,6 +1099,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                     <h3 className="font-medium text-foreground mb-4">2. Provide input fields*</h3>
                     
                     <div className="space-y-4">
+                      {config.id === 'loop-over-rows' && mode === 'keyword-kombat' && (
                       <div>
                         <label className="text-sm text-foreground mb-2 block">Map keyword variable</label>
                         <Select value={inputValues.keyword_variable || ''} onValueChange={(value) => handleInputChange('keyword_variable', value)}>
@@ -1035,8 +1110,9 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                             <SelectItem value="keyword">keyword</SelectItem>
                           </SelectContent>
                         </Select>
-                        </div>
+                        </div>) }
                       
+                      {config.id === 'loop-over-rows' && mode === 'keyword-kombat' && (
                       <div>
                         <label className="text-sm text-foreground mb-2 block">Enter company URL</label>
                         <Input
@@ -1044,7 +1120,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                           value={inputValues.company_url || ''}
                           onChange={(e) => handleInputChange('company_url', e.target.value)}
                       />
-                    </div>
+                    </div>) }
                     </div>
                 </div>
 

@@ -72,6 +72,17 @@ Mike Chen,mike@startupxyz.com,StartupXYZ,startupxyz.com`
     endpoint: 'https://scaile--loop-over-rows-fastapi-app.modal.run/process',
     supportsGoogleSearch: true,
     supportsTestMode: true,
+
+    // Modes metadata (frontend only)
+    // default mode is freestyle; keyword-kombat is a preset mode
+    // Temporary per-mode endpoint override until backend is unified
+    // @ts-expect-error augment config at runtime in WorkflowBase
+    modes: [
+      { id: 'freestyle', label: 'Freestyle' },
+      { id: 'keyword-kombat', label: 'Keyword Kombat', endpointOverride: 'https://scaile--keyword-kombat-frontand-fastapi-app.modal.run/process' }
+    ],
+    // @ts-expect-error augment config at runtime in WorkflowBase
+    defaultModeId: 'freestyle',
     
     estimatedTime: {
       base: 15,
@@ -543,53 +554,7 @@ Mike Chen,mike@startupxyz.com,StartupXYZ,startupxyz.com`
     downloadable: true
   },
 
-  'keyword-kombat': {
-    id: 'keyword-kombat',
-    title: 'Keyword Kombat',
-    description: 'Score keywords based on company description',
-    icon: BarChart3,
-    color: 'blue',
-    status: 'live',
-    category: 'Data Processing',
-
-    inputs: [
-      {
-        id: 'keywords',
-        label: 'Keywords',
-        type: 'csv',
-        placeholder: 'music\nstreaming\nsubscription',
-        required: true,
-        helpText: 'Upload a file or paste a list with the keywords you would like to rank*'
-      },
-      {
-        id: 'company_url',
-        label: 'Company URL',
-        type: 'url',
-        placeholder: 'https://www.spotify.com/',
-        required: true
-      },
-      {
-        id: 'keyword_variable',
-        label: 'Map keyword variable',
-        type: 'select',
-        options: [
-          { id: 'keyword', label: 'keyword', value: 'keyword' }
-        ],
-        required: true
-      }
-    ],
-
-    endpoint: '', // Add your endpoint here
-    supportsTestMode: true,
-
-    estimatedTime: {
-      base: 10,
-      perItem: 2
-    },
-
-    outputType: 'table',
-    downloadable: true
-  }
+  // keyword-kombat removed as standalone workflow; available as a mode under loop-over-rows
 };
 
 // Helper function to get workflow by ID

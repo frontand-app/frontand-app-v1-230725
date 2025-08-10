@@ -17,9 +17,9 @@ const MockPreview: React.FC<MockPreviewProps> = ({
   return (
     <div className="text-sm bg-secondary/40 border border-border rounded p-3">
       <div className="font-medium text-foreground mb-1">{title}</div>
-      <div className="text-muted-foreground">{children}</div>
+      <div className="text-muted-foreground max-h-48 overflow-auto">{children}</div>
       <div className="pt-2 mt-2 border-t text-foreground flex items-center justify-between">
-        {filename ? <span className="text-sm">✓ {filename}</span> : <span />}
+        {filename ? <span className="text-sm truncate max-w-[70%]">✓ {filename}</span> : <span />}
         {onUploadNew && (
           <Button variant="outline" size="sm" onClick={onUploadNew}>
             Upload new

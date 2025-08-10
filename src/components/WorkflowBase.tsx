@@ -1009,35 +1009,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                   </div>
         )}
 
-        {/* Google Search Toggle for keyword-kombat mode */}
-        {config.id === 'loop-over-rows' && (mode === 'keyword-kombat') && (
-          <div className="flex items-center gap-3 mb-8">
-            <Switch 
-              checked={enableGoogleSearch} 
-              onCheckedChange={setEnableGoogleSearch}
-              className="data-[state=checked]:bg-primary"
-            />
-            <span className="font-medium text-foreground">Google Search</span>
-            <div className="flex items-center gap-1">
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Enhanced company research</span>
-            </div>
-        </div>
-        )}
-        {config.id === 'loop-over-rows' && (mode === 'freestyle') && (
-          <div className="flex items-center gap-3 mb-8">
-            <Switch 
-              checked={enableGoogleSearch} 
-              onCheckedChange={setEnableGoogleSearch}
-              className="data-[state=checked]:bg-primary"
-            />
-            <span className="font-medium text-foreground">Google Search</span>
-            <div className="flex items-center gap-1">
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Optional web enrichment</span>
-            </div>
-          </div>
-        )}
+        {/* (Moved) Google Search toggle appears inside the input card */}
 
         {/* How it works removed for simpler above-the-fold layout */}
 
@@ -1050,6 +1022,21 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                   YOUR INPUT
                 </div>
 
+                {config.id === 'loop-over-rows' && (
+                  <div className="flex items-center gap-3 mb-4">
+                    <Switch
+                      checked={enableGoogleSearch}
+                      onCheckedChange={setEnableGoogleSearch}
+                      className="data-[state=checked]:bg-primary"
+                    />
+                    <span className="font-medium text-foreground">Google Search</span>
+                    <div className="flex items-center gap-1">
+                      <Search className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">{mode === 'keyword-kombat' ? 'Enhanced company research' : 'Optional web enrichment'}</span>
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-6">
                         <div>
                     <h3 className="font-medium text-foreground mb-4">
@@ -1059,18 +1046,18 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                     </h3>
                     
                     {config.id === 'loop-over-rows' && mode === 'keyword-kombat' && step >= 2 && uploadedFile ? (
-                      <div className="space-y-3">
-                        <div className="text-sm font-medium text-foreground">Keyword</div>
+                      <div className="space-y-3 bg-secondary/40 border border-border rounded p-3">
+                        <div className="text-sm font-medium text-foreground">Preview</div>
                         <div className="space-y-1 text-sm text-muted-foreground">
                           {inputValues.keywords.split('\n').map((keyword: string, idx: number) => (
-                            <div key={idx}>{keyword}</div>
+                            <div key={idx}>• {keyword}</div>
                           ))}
                         </div>
                         <div className="flex items-center justify-between pt-3 border-t">
                           <span className="text-sm text-foreground">✓ {uploadedFile.name}</span>
                           <Button variant="outline" size="sm">Upload new</Button>
+                        </div>
                       </div>
-                    </div>
                     ) : config.id === 'loop-over-rows' && mode === 'keyword-kombat' ? (
                       <>
                         <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
@@ -1108,9 +1095,13 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                 </div>
 
                 {testMode && inputValues.csv_data && (
-                  <div className="text-sm text-muted-foreground bg-secondary/40 border border-border rounded p-3">
-                    <div className="font-medium text-foreground mb-1">Mock CSV Preview</div>
-                    <pre className="overflow-auto whitespace-pre-wrap">{inputValues.csv_data}</pre>
+                  <div className="text-sm bg-secondary/40 border border-border rounded p-3">
+                    <div className="font-medium text-foreground mb-1">Preview</div>
+                    <pre className="overflow-auto whitespace-pre-wrap text-muted-foreground">{inputValues.csv_data}</pre>
+                    <div className="pt-2 mt-2 border-t text-foreground flex items-center justify-between">
+                      <span className="text-sm">✓ {uploadedFile?.name || 'sample.csv'}</span>
+                      <Button variant="outline" size="sm">Upload new</Button>
+                    </div>
                   </div>
                 )}
 
@@ -1161,7 +1152,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                 </div>
 
                   {/* Step 2: Input Fields */}
-                        <div className="mt-6">
+                        <div className="mt-6 pt-4 border-t border-border">
                     <h3 className="font-medium text-foreground mb-2">2. Provide input fields*</h3>
                     
                     <div className="space-y-4">

@@ -953,85 +953,74 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                         : 'Upload CSV data'}
                     </h3>
                     
-                    {config.id === 'loop-over-rows' && mode === 'keyword-kombat' && step >= 2 && uploadedFile ? (
-                      <MockPreview filename={uploadedFile.name}>
-                        <div className="space-y-1 text-sm">
-                          {inputValues.keywords.split('\n').map((keyword: string, idx: number) => (
-                            <div key={idx}>• {keyword}</div>
-                          ))}
-                        </div>
-                      </MockPreview>
-                    ) : config.id === 'loop-over-rows' && mode === 'keyword-kombat' ? (
-                      <>
-                        <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-                          <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-4" />
-                          <p className="font-medium text-foreground mb-2">Upload a CSV or XLSX file up to 10 MB.</p>
-                          <p className="text-sm text-muted-foreground">Please include headers in the first row.</p>
-                        </div>
-                        
-                        <Textarea
-                          placeholder="Paste your keyword list here."
+                    {config.id === 'loop-over-rows' && mode === 'keyword-kombat' ? (
+                      <div className="space-y-4">
+                        <CsvPlaintextInput
+                          id="keywords"
                           value={inputValues.keywords || ''}
-                          onChange={(e) => handleInputChange('keywords', e.target.value)}
-                          className="min-h-[100px] resize-none"
+                          placeholder="Paste your keyword list here."
+                          uploadedFileName={uploadedFile?.name || null}
+                          onChange={(text) => handleInputChange('keywords', text)}
+                          onFilePicked={(file) => {
+                            setStep(2);
+                            processFile(file, 'keywords');
+                          }}
+                          onClearFile={() => {
+                            setUploadedFile(null);
+                            handleInputChange('keywords', '');
+                          }}
                         />
-                      </>
+                      </div>
                     ) : (
-              // freestyle: CSV upload + column selector + prompt textarea
-              <div className="space-y-4">
-                <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
-                  <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-                  <p className="font-medium text-foreground mb-1">Upload a CSV file up to 10 MB</p>
-                  <p className="text-sm text-muted-foreground">First row should contain column headers</p>
-                  <div className="mt-3">
-                    <Button variant="outline" size="sm" onClick={() => {
-                      const input = document.createElement('input');
-                      input.type = 'file';
-                      input.accept = '.csv';
-                      input.onchange = (e) => {
-                        const file = (e.target as HTMLInputElement).files?.[0];
-                        if (file) processFile(file, 'csv_data');
-                      };
-                      input.click();
-                    }}>Choose File</Button>
-                    </div>
-                </div>
+                      <div className="space-y-4">
+                        <CsvPlaintextInput
+                          id="csv_data"
+                          value={inputValues.csv_data || ''}
+                          placeholder="Paste CSV with headers in first row..."
+                          uploadedFileName={uploadedFile?.name || null}
+                          onChange={(text) => handleInputChange('csv_data', text)}
+                          onFilePicked={(file) => processFile(file, 'csv_data')}
+                          onClearFile={() => {
+                            setUploadedFile(null);
+                            handleInputChange('csv_data', '');
+                          }}
+                        />
 
-                {testMode && inputValues.csv_data && (
-                  <MockPreview filename={uploadedFile?.name || 'sample.csv'}>
-                    <pre className="overflow-auto whitespace-pre-wrap">{inputValues.csv_data}</pre>
-                  </MockPreview>
-                )}
+                        {testMode && inputValues.csv_data && (
+                          <MockPreview filename={uploadedFile?.name || 'sample.csv'}>
+                            <pre className="overflow-auto whitespace-pre-wrap">{inputValues.csv_data}</pre>
+                          </MockPreview>
+                        )}
 
-                {csvHeaders.length > 0 && (
-                  <ColumnSelectorChips
-                    headers={csvHeaders}
-                    selected={selectedCsvColumns}
-                    onToggle={(_, next) => setSelectedCsvColumns(next)}
-                  />
-                )}
+                        {csvHeaders.length > 0 && (
+                          <ColumnSelectorChips
+                            headers={csvHeaders}
+                            selected={selectedCsvColumns}
+                            onToggle={(_, next) => setSelectedCsvColumns(next)}
+                          />
+                        )}
 
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">Task (Prompt)</label>
-                  <Textarea
-                    placeholder="Describe the task for each row..."
-                    value={inputValues.prompt || ''}
-                    onChange={(e) => handleInputChange('prompt', e.target.value)}
-                    className="min-h-[140px] resize-none"
-                  />
-                </div>
+                        <div>
+                          <label className="text-sm font-medium text-foreground mb-2 block">Task (Prompt)</label>
+                          <Textarea
+                            placeholder="Describe the task for each row..."
+                            value={inputValues.prompt || ''}
+                            onChange={(e) => handleInputChange('prompt', e.target.value)}
+                            className="min-h-[140px] resize-none"
+                          />
+                        </div>
 
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">Output schema (JSON instruction)</label>
-                  <Textarea
-                    placeholder={`## OUTPUT\n{\n  "Umsatz": {"wert": "...", "quelle": "..."},\n  "EBIT": {"wert": "...", "quelle": "..."}\n}\n\n## TASK\nBeschreibe hier deine Aufgabe...`}
-                    value={inputValues.output_schema || ''}
-                    onChange={(e) => handleInputChange('output_schema', e.target.value)}
-                    className="min-h-[140px] resize-none"
-                  />
-                </div>
-                    </div>
-                  )}
+                        <div>
+                          <label className="text-sm font-medium text-foreground mb-2 block">Output schema (JSON instruction)</label>
+                          <Textarea
+                            placeholder={`## OUTPUT\n{\n  "Umsatz": {"wert": "...", "quelle": "..."},\n  "EBIT": {"wert": "...", "quelle": "..."}\n}\n\n## TASK\nBeschreibe hier deine Aufgabe...`}
+                            value={inputValues.output_schema || ''}
+                            onChange={(e) => handleInputChange('output_schema', e.target.value)}
+                            className="min-h-[140px] resize-none"
+                          />
+                        </div>
+                      </div>
+                    )}
                 </div>
 
                   {/* Step 2: Input Fields */}

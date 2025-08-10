@@ -1107,6 +1107,13 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                     </div>
                 </div>
 
+                {testMode && inputValues.csv_data && (
+                  <div className="text-sm text-muted-foreground bg-secondary/40 border border-border rounded p-3">
+                    <div className="font-medium text-foreground mb-1">Mock CSV Preview</div>
+                    <pre className="overflow-auto whitespace-pre-wrap">{inputValues.csv_data}</pre>
+                  </div>
+                )}
+
                 {csvHeaders.length > 0 && (
                         <div>
                     <label className="text-sm font-medium text-foreground mb-2 block">Columns to include</label>
@@ -1154,8 +1161,8 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                 </div>
 
                   {/* Step 2: Input Fields */}
-                        <div>
-                    <h3 className="font-medium text-foreground mb-4">2. Provide input fields*</h3>
+                        <div className="mt-6">
+                    <h3 className="font-medium text-foreground mb-2">2. Provide input fields*</h3>
                     
                     <div className="space-y-4">
                       {config.id === 'loop-over-rows' && mode === 'keyword-kombat' && (
@@ -1257,28 +1264,16 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                 )}
 
                 {!isExecuting && !showResults && (
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center text-sm font-bold">1</div>
-                      <span className="text-foreground">AI Processing</span>
-                    </div>
-                    <div className="flex justify-center">
-                      <ArrowDown className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center text-sm font-bold">2</div>
-                      <div>
-                        <div className="text-foreground">Loop: Scoring for each keyword based on company info</div>
-                        <div className="text-sm text-muted-foreground">Output: Suitability score, AI reasoning</div>
+                  <div className="space-y-4">
+                    {[{n:1,t:'AI Processing',d:'Model prepares context & tools'},{n:2,t:'Loop over rows',d:'Process each row using your prompt'},{n:3,t:'Aggregate output',d:'Download as CSV or JSON'}].map((s) => (
+                      <div key={s.n} className="flex items-start gap-3 p-3 border border-border rounded-lg">
+                        <div className="w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center text-sm font-bold shrink-0">{s.n}</div>
+                        <div>
+                          <div className="text-foreground font-medium">{s.t}</div>
+                          <div className="text-sm text-muted-foreground">{s.d}</div>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex justify-center">
-                      <ArrowDown className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center text-sm font-bold">3</div>
-                      <span className="text-foreground">Aggregate output in one file.</span>
-                    </div>
+                    ))}
                   </div>
                 )}
               </CardContent>

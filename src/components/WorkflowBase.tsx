@@ -416,7 +416,8 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
           headers: parsedData.headers,
           prompt: inputValues.prompt.trim(),
           batch_size: 10,
-          enable_google_search: enableGoogleSearch
+          enable_google_search: enableGoogleSearch,
+          mode: 'freestyle'
         };
       } else if (config.id === 'loop-over-rows' && mode === 'keyword-kombat' && inputValues.keywords && inputValues.company_url) {
         // Keyword Kombat mode
@@ -427,6 +428,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
           dataDict[`row_${index + 1}`] = [kw.trim()];
         });
         requestData = {
+          mode: 'keyword-kombat',
           keywords: lines,
           company_url: inputValues.company_url,
           keyword_variable: inputValues.keyword_variable || 'keyword',
@@ -474,7 +476,8 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
         requestData = {
           ...inputValues,
           test_mode: testMode,
-          enable_google_search: enableGoogleSearch
+          enable_google_search: enableGoogleSearch,
+          ...(config.id === 'loop-over-rows' ? { mode } : {})
         };
       }
 

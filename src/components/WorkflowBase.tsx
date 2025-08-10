@@ -89,6 +89,9 @@ export interface WorkflowConfig {
   endpoint: string;
   supportsGoogleSearch?: boolean;
   supportsTestMode?: boolean;
+  // Optional modes for single-app multi-mode UX
+  modes?: Array<{ id: string; label: string; endpointOverride?: string }>;
+  defaultModeId?: string;
   
   // Timing estimates (in seconds)
   estimatedTime: {

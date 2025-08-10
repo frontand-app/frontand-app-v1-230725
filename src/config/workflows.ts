@@ -76,12 +76,10 @@ Mike Chen,mike@startupxyz.com,StartupXYZ,startupxyz.com`
     // Modes metadata (frontend only)
     // default mode is freestyle; keyword-kombat is a preset mode
     // Temporary per-mode endpoint override until backend is unified
-    // @ts-expect-error augment config at runtime in WorkflowBase
     modes: [
       { id: 'freestyle', label: 'Freestyle' },
       { id: 'keyword-kombat', label: 'Keyword Kombat', endpointOverride: 'https://scaile--keyword-kombat-frontand-fastapi-app.modal.run/process' }
     ],
-    // @ts-expect-error augment config at runtime in WorkflowBase
     defaultModeId: 'freestyle',
     
     estimatedTime: {

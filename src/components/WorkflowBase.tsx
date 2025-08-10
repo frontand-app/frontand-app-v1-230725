@@ -931,19 +931,10 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
           <div className="space-y-6">
             <Card className="border-2 border-primary rounded-2xl h-full">
               <CardContent className="p-6 h-full flex flex-col">
-                <div className="bg-primary text-primary-foreground rounded-lg px-3 py-1 text-sm font-medium inline-block mb-6">
+                <div className="bg-primary text-primary-foreground rounded-lg px-3 py-1 text-sm font-medium inline-flex w-fit mb-6">
                   YOUR INPUT
                 </div>
 
-                {config.id === 'loop-over-rows' && (
-                  <div className="mb-4">
-                    <GoogleSearchToggle
-                      checked={enableGoogleSearch}
-                      onChange={setEnableGoogleSearch}
-                      isKeywordMode={mode === 'keyword-kombat'}
-                    />
-                  </div>
-                )}
 
                 <div className="space-y-6">
                         <div>
@@ -1023,10 +1014,8 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                     )}
                 </div>
 
-                  {/* Step 2: Input Fields */}
+                  {/* Additional inputs for specific modes */}
                         <div className="mt-6 pt-4 border-t border-border">
-                    <h3 className="font-medium text-foreground mb-2">2. Provide input fields*</h3>
-                    
                     <div className="space-y-4">
                       {config.id === 'loop-over-rows' && mode === 'keyword-kombat' && (
                       <div>
@@ -1052,6 +1041,17 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                     </div>) }
                     </div>
                 </div>
+
+                  {/* Google Search Toggle as last input */}
+                  {config.id === 'loop-over-rows' && (
+                    <div className="mt-4">
+                      <GoogleSearchToggle
+                        checked={enableGoogleSearch}
+                        onChange={setEnableGoogleSearch}
+                        isKeywordMode={mode === 'keyword-kombat'}
+                      />
+                    </div>
+                  )}
 
                   {/* Run Button */}
                   <div className="flex items-center gap-3 pt-4 mt-auto">

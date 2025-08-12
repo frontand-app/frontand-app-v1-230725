@@ -209,18 +209,16 @@ const Layout = ({ children }: LayoutProps) => {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="flex items-center space-x-4">
-              <Link to="/" className="flex items-center space-x-2">
+              <Link to="/" className="flex items-center">
                 <img src="/Front&_Logo.svg" alt="Front&" className="h-6" />
-                <span className="font-bold text-foreground">Front&</span>
               </Link>
-              <span className="text-sm text-muted-foreground">One frontend, infinite cloud apps</span>
             </div>
             
             <div className="flex items-center space-x-6 text-sm text-muted-foreground">
               <a href="https://github.com/frontand-app/frontand-platform" target="_blank" rel="noopener noreferrer" className="hover:text-foreground">
                 GitHub
               </a>
-              <span>© 2025 Front&</span>
+              <span className="sr-only">© 2025 Front&</span>
             </div>
           </div>
         </div>

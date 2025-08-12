@@ -6,14 +6,14 @@ const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="w-full max-w-md mx-auto">
         {isLogin ? <LoginForm /> : <SignUpForm />}
         
         <div className="text-center mt-4">
           <button 
             onClick={() => setIsLogin(!isLogin)}
-            className="text-sm text-gray-600 hover:text-gray-900"
+            className="text-sm text-muted-foreground hover:text-foreground"
           >
             {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
           </button>

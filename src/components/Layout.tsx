@@ -38,10 +38,7 @@ const Layout = ({ children }: LayoutProps) => {
     await signOut();
   };
 
-  // Don't show layout on auth page
-  if (location.pathname === '/auth') {
-    return <>{children}</>;
-  }
+  // Always show layout, including on /auth (so the page has header/footer)
 
   return (
     <div className="min-h-screen bg-background">

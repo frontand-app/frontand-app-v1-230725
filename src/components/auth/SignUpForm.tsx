@@ -3,10 +3,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 export const SignUpForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const { signUp } = useAuth();
 
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -33,7 +36,15 @@ export const SignUpForm = () => {
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>
-        <Button className="w-full">Sign Up</Button>
+        {error && <div className="text-sm text-red-600">{error}</div>}
+        <Button className="w-full" onClick={async () => {
+          try {
+            setError(null);
+            await signUp(email, password);
+          } catch (e: any) {
+            setError(e.message || 'Sign-up failed');
+          }
+        }}>Sign Up</Button>
       </CardContent>
     </Card>
   );

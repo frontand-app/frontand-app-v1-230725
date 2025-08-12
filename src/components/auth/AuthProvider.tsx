@@ -1,12 +1,13 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { supabase } from '@/lib/supabase';
 
-interface User {
+type User = {
   id: string;
   email: string;
-}
+} | null;
 
 interface AuthContextType {
-  user: User | null;
+  user: User;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
@@ -28,25 +29,39 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simple mock auth for now
-    setLoading(false);
+    const init = async () => {
+      const { data } = await supabase.auth.getSession();
+      setUser(data.session ? { id: data.session.user.id, email: data.session.user.email || '' } : null);
+      setLoading(false);
+    };
+    init();
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session ? { id: session.user.id, email: session.user.email || '' } : null);
+    });
+    return () => {
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    // Mock sign in
-    setUser({ id: '1', email });
+    const { error, data } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    setUser(data.user ? { id: data.user.id, email: data.user.email || '' } : null);
   };
 
   const signUp = async (email: string, password: string) => {
-    // Mock sign up
-    setUser({ id: '1', email });
+    const { error, data } = await supabase.auth.signUp({ email, password });
+    if (error) throw error;
+    setUser(data.user ? { id: data.user.id, email: data.user.email || '' } : null);
   };
 
   const signOut = async () => {
+    await supabase.auth.signOut();
     setUser(null);
   };
 

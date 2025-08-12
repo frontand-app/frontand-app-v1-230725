@@ -78,9 +78,15 @@ const CsvPlaintextInput: React.FC<CsvPlaintextInputProps> = ({
       return result;
     };
     const header = parseLine(lines[0]);
-    const rows = lines.slice(1, 6).map(parseLine); // first 5 rows for preview
+    const rowsToShow = 20;
+    const rows = lines.slice(1, 1 + rowsToShow).map(parseLine); // first N rows for preview
     return { header, rows };
   }, [value]);
+
+  const shorten = (text: string, max = 200) => {
+    if (!text) return '';
+    return text.length > max ? `${text.slice(0, max)}…` : text;
+  };
 
   return (
     <div className="space-y-3">
@@ -104,7 +110,7 @@ const CsvPlaintextInput: React.FC<CsvPlaintextInputProps> = ({
                     <thead className="bg-secondary sticky top-0">
                       <tr>
                         {csvPreview.header.map((h, i) => (
-                          <th key={i} className="text-left px-3 py-2 font-medium whitespace-pre-wrap break-words">{h}</th>
+                          <th key={i} className="text-left px-3 py-2 font-medium whitespace-pre-wrap break-words">{shorten(h, 80)}</th>
                         ))}
                       </tr>
                     </thead>
@@ -112,7 +118,7 @@ const CsvPlaintextInput: React.FC<CsvPlaintextInputProps> = ({
                       {csvPreview.rows.map((r, idx) => (
                         <tr key={idx} className="odd:bg-background even:bg-secondary/40">
                           {csvPreview.header.map((_, i) => (
-                            <td key={i} className="px-3 py-2 whitespace-pre-wrap break-words align-top">{r[i] ?? ''}</td>
+                            <td key={i} className="px-3 py-2 whitespace-pre-wrap break-words align-top" title={r[i] ?? ''}>{shorten(r[i] ?? '', 160)}</td>
                           ))}
                         </tr>
                       ))}
@@ -124,7 +130,7 @@ const CsvPlaintextInput: React.FC<CsvPlaintextInputProps> = ({
               )}
               <div className="px-3 pb-2 pt-1 text-xs text-muted-foreground">
                 <FileText className="inline w-3 h-3 mr-1" />
-                {linesDetected} {linesDetected === 1 ? 'line' : 'lines'} detected · Click to edit
+                {Math.max(linesDetected - 1, 0)} rows total · Previewing first {csvPreview ? csvPreview.rows.length : 0} · Click to edit
               </div>
             </div>
           ) : (
@@ -163,7 +169,7 @@ const CsvPlaintextInput: React.FC<CsvPlaintextInputProps> = ({
                     <thead className="bg-secondary sticky top-0">
                       <tr>
                         {csvPreview.header.map((h, i) => (
-                          <th key={i} className="text-left px-3 py-2 font-medium whitespace-pre-wrap break-words">{h}</th>
+                          <th key={i} className="text-left px-3 py-2 font-medium whitespace-pre-wrap break-words">{shorten(h, 80)}</th>
                         ))}
                       </tr>
                     </thead>
@@ -171,7 +177,7 @@ const CsvPlaintextInput: React.FC<CsvPlaintextInputProps> = ({
                       {csvPreview.rows.map((r, idx) => (
                         <tr key={idx} className="odd:bg-background even:bg-secondary/40">
                           {csvPreview.header.map((_, i) => (
-                            <td key={i} className="px-3 py-2 whitespace-pre-wrap break-words align-top">{r[i] ?? ''}</td>
+                            <td key={i} className="px-3 py-2 whitespace-pre-wrap break-words align-top" title={r[i] ?? ''}>{shorten(r[i] ?? '', 160)}</td>
                           ))}
                         </tr>
                       ))}
@@ -183,7 +189,7 @@ const CsvPlaintextInput: React.FC<CsvPlaintextInputProps> = ({
               )}
               <div className="px-3 pb-2 pt-1 text-xs text-muted-foreground">
                 <FileText className="inline w-3 h-3 mr-1" />
-                {linesDetected} {linesDetected === 1 ? 'line' : 'lines'} detected · Click to edit or replace
+                {Math.max(linesDetected - 1, 0)} rows total · Previewing first {csvPreview ? csvPreview.rows.length : 0} · Click to edit or replace
               </div>
             </div>
           ) : (

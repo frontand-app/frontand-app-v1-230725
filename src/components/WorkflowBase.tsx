@@ -1023,7 +1023,10 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                             <SelectValue placeholder="Select" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="keyword">keyword</SelectItem>
+                            {/* Prefer CSV headers if present; fall back to 'keyword' */}
+                            {(csvHeaders.length > 0 ? csvHeaders : ['keyword']).map((h) => (
+                              <SelectItem key={h} value={h}>{h}</SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         </div>) }

@@ -715,7 +715,7 @@ OUTPUT (JSON only; array with single element):
   // Determine inputs based on mode for loop-over-rows
   const getActiveInputs = (): WorkflowField[] => {
     if (config.id !== 'loop-over-rows') return config.inputs;
-    if (mode === 'freestyle') return config.inputs;
+    if (mode === 'freestyle' || mode === 'vc-analyst') return config.inputs;
     // keyword-kombat inputs
     return [
       { id: 'keywords', label: 'Keywords', type: 'csv', required: true, placeholder: 'music\nstreaming\nsubscription', helpText: 'Upload a file or paste a list with the keywords you would like to rank*' },

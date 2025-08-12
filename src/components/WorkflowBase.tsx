@@ -155,13 +155,13 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
   const authRequired = !testMode && !user; // sign-in gating (no inline error)
   const inputBadgeClass = highlightOutput ? 'bg-muted text-muted-foreground' : 'bg-primary text-primary-foreground';
   const outputBadgeClass = highlightOutput ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground';
-  // VC Analyst configurable fund rules (EDP-specific defaults, user-editable)
+  // VC Analyst configurable fund rules (generic defaults, user-editable)
   const [vcStages, setVcStages] = useState<string>('Pre-seed, Seed, Series A');
   const [vcVintageMonths, setVcVintageMonths] = useState<string>('24');
   const [vcTrlMin, setVcTrlMin] = useState<string>('5');
-  const [vcSectors, setVcSectors] = useState<string>('ClimateTech, EnergyTech, AI/ML applied to Energy');
+  const [vcSectors, setVcSectors] = useState<string>('Sector A, Sector B');
   const [vcGeos, setVcGeos] = useState<string>('North America, Europe');
-  const [vcFundName, setVcFundName] = useState<string>('EDP');
+  const [vcFundName, setVcFundName] = useState<string>('Your Fund');
 
   const handleMockModeToggle = (isMockMode: boolean) => {
     setTestMode(isMockMode);
@@ -189,6 +189,23 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
         }
       } catch {}
       setUploadedFile({ name: 'sample.csv' } as File);
+      setError(null);
+    } else if (isMockMode && (config.id === 'loop-over-rows' && mode === 'vc-analyst')) {
+      const mockCsv = 'Companies,Stage,HQ,TRL,Traction,IP,Founder\nSolarForge,Seed,Germany,5,Paying pilot with utility,Filed,Repeat founder\nGridAI,Pre-seed,USA,6,LOIs with energy clients,Granted,PhD technical';
+      setInputValues({
+        csv_data: mockCsv,
+        prompt: buildVcAnalystPrompt(),
+        output_schema: ''
+      });
+      try {
+        const parsed = parseCSVData(mockCsv);
+        if (parsed) {
+          setCsvHeaders(parsed.headers);
+          setSelectedCsvColumns(parsed.headers);
+        }
+      } catch {}
+      setUploadedFile({ name: 'vc_analyst_sample.csv' } as File);
+      setStep(2);
       setError(null);
     } else {
       setInputValues({});

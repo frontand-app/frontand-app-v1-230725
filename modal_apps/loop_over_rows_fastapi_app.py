@@ -95,7 +95,8 @@ async def process_rows_freestyle(request: FreestyleRequest) -> Dict[str, Any]:
             row_start = time.time()
             print(f"[freestyle] row_start request_id={rid} row_key={row_key}")
             row_dict = {h: v for h, v in zip(request.headers, row_values)}
-            prompt = f"Row: {json.dumps(row_dict)}\n\nInstructions: {request.prompt}\n\nReturn strict JSON only."
+            search_hint = "\nIf helpful and allowed, enrich using public web search; still return strict JSON only." if request.enable_google_search else ""
+            prompt = f"Row: {json.dumps(row_dict)}\n\nInstructions: {request.prompt}{search_hint}\n\nReturn strict JSON only."
             async with throttler:
                 resp = model.generate_content(prompt)
             txt = (resp.text or "{}").strip()

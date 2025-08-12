@@ -18,6 +18,7 @@ class FreestyleRequest(BaseModel):
     enable_google_search: bool = False
     test_mode: bool = False
     mode: Optional[str] = None
+    request_id: Optional[str] = None
 
 
 class KeywordKombatRequest(BaseModel):

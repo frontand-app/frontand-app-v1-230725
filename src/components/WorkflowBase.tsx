@@ -37,6 +37,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Link } from 'react-router-dom';
 
 // Workflow Configuration Types
 export interface WorkflowField {
@@ -988,6 +989,15 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
           <div className="space-y-6">
             <Card className={`border-2 ${highlightOutput ? 'border-border' : 'border-primary'} rounded-2xl h-full ${highlightOutput ? 'opacity-80' : 'opacity-100'}`}>
               <CardContent className="p-6 h-full flex flex-col" onMouseDown={() => setInputActive(true)}>
+                {authRequired && (
+                  <Alert className="mb-4" variant="default">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      <span className="font-medium">Sign in required.</span> You need to sign in to run the full workflow. You can switch on Mock mode to try a short preview.
+                      <span className="ml-2 underline"><Link to="/auth">Go to sign in</Link></span>
+                    </AlertDescription>
+                  </Alert>
+                )}
                 <div className="bg-primary text-primary-foreground rounded-lg px-3 py-1 text-sm font-medium inline-flex w-fit mb-6">
                   YOUR INPUT
                 </div>

@@ -900,15 +900,15 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
     <div className="min-h-screen bg-background text-foreground">
       <div className="container mx-auto px-4 py-12 max-w-6xl">
         {/* Header */}
-        <div className="mb-6">
-          <div className="inline-flex items-center gap-2 bg-secondary rounded-full px-3 py-1 text-sm">
-            {config.category}
+          <div className="mb-6">
+            <div className="inline-flex items-center gap-2 bg-secondary rounded-full px-3 py-1 text-sm">
+              {config.category}
+            </div>
           </div>
-        </div>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold">{config.title}</h1>
+                <h1 className="text-3xl font-bold">{config.title}</h1>
             </div>
           </div>
           <div className="flex items-center gap-6">
@@ -974,8 +974,10 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
           </div>
         )}
         <p className="text-muted-foreground mb-6">
-            {config.description}
-          </p>
+          {config.id === 'loop-over-rows' && mode === 'keyword-kombat'
+            ? 'Score keywords for a specific company; uses the company context to rate each keyword (10–100) with rationale.'
+            : config.description}
+        </p>
 
         {/* Mock mode toggle moved next to mode dropdown */}
 
@@ -1001,7 +1003,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                         : 'Upload CSV data'}
                     </h3>
                     
-                    {config.id === 'loop-over-rows' && mode === 'keyword-kombat' ? (
+                      {config.id === 'loop-over-rows' && mode === 'keyword-kombat' ? (
                       <div className="space-y-4">
                         <CsvPlaintextInput
                           id="keywords"
@@ -1017,6 +1019,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                             setUploadedFile(null);
                             handleInputChange('keywords', '');
                           }}
+                            forceSingleHeader="keyword"
                         />
                       </div>
                     ) : (
@@ -1078,8 +1081,8 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                             <SelectValue placeholder="Select" />
                           </SelectTrigger>
                           <SelectContent>
-                            {/* Prefer CSV headers if present; fall back to 'keyword' */}
-                            {(csvHeaders.length > 0 ? csvHeaders : ['keyword']).map((h) => (
+                            {/* In keyword-kombat, the variable should be 'keyword' */}
+                            {['keyword'].map((h) => (
                               <SelectItem key={h} value={h}>{h}</SelectItem>
                             ))}
                           </SelectContent>

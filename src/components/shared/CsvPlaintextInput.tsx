@@ -12,6 +12,7 @@ interface CsvPlaintextInputProps {
   onFilePicked: (file: File) => void;
   onClearFile?: () => void;
   onRequestFileDialog?: () => void;
+  forceSingleHeader?: string; // when provided, preview as 1-column CSV with this header
 }
 
 const CsvPlaintextInput: React.FC<CsvPlaintextInputProps> = ({
@@ -77,11 +78,18 @@ const CsvPlaintextInput: React.FC<CsvPlaintextInputProps> = ({
       result.push(current.trim().replace(/^\"|\"$/g, ''));
       return result;
     };
-    const header = parseLine(lines[0]);
+    let header: string[];
+    let rows: string[][];
     const rowsToShow = 20;
-    const rows = lines.slice(1, 1 + rowsToShow).map(parseLine); // first N rows for preview
+    if (forceSingleHeader) {
+      header = [forceSingleHeader];
+      rows = lines.slice(0, rowsToShow).map(l => [l.trim()]);
+    } else {
+      header = parseLine(lines[0]);
+      rows = lines.slice(1, 1 + rowsToShow).map(parseLine); // first N rows for preview
+    }
     return { header, rows };
-  }, [value]);
+  }, [value, forceSingleHeader]);
 
   const shorten = (text: string, max = 200) => {
     if (!text) return '';

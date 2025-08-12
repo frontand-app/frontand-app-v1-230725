@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Upload, FileText, X } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -26,6 +26,14 @@ const CsvPlaintextInput: React.FC<CsvPlaintextInputProps> = ({
 }) => {
   const initialTab = uploadedFileName ? 'file' : 'text';
   const [activeTab, setActiveTab] = useState<'text' | 'file'>(initialTab as 'text' | 'file');
+  const [isEditing, setIsEditing] = useState<boolean>(!value);
+
+  useEffect(() => {
+    // If value becomes available (e.g., file upload), default to preview mode
+    if (value && value.length > 0 && uploadedFileName && activeTab === 'file') {
+      setIsEditing(false);
+    }
+  }, [value, uploadedFileName, activeTab]);
 
   const openFileDialog = () => {
     const input = document.createElement('input');
@@ -55,54 +63,89 @@ const CsvPlaintextInput: React.FC<CsvPlaintextInputProps> = ({
         </TabsList>
 
         <TabsContent value="text" className="mt-2">
-          <Textarea
-            id={id}
-            placeholder={placeholder || 'Paste CSV with headers in first row...'}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            className="min-h-[96px] resize-none font-mono text-sm"
-          />
-          <div className="mt-1 text-xs text-muted-foreground">
-            {linesDetected > 0 && (
-              <>
+          {(!isEditing && value) ? (
+            <div
+              role="button"
+              onClick={() => setIsEditing(true)}
+              className="min-h-[96px] border rounded-md p-3 bg-background text-foreground font-mono text-sm whitespace-pre-wrap cursor-text"
+              title="Click to edit"
+            >
+              {value}
+              <div className="mt-1 text-xs text-muted-foreground">
                 <FileText className="inline w-3 h-3 mr-1" />
-                {linesDetected} {linesDetected === 1 ? 'line' : 'lines'} detected
-              </>
-            )}
-          </div>
+                {linesDetected} {linesDetected === 1 ? 'line' : 'lines'} detected · Click to edit
+              </div>
+            </div>
+          ) : (
+            <>
+              <Textarea
+                id={id}
+                placeholder={placeholder || 'Paste CSV with headers in first row...'}
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                className="min-h-[96px] resize-none font-mono text-sm"
+                onBlur={() => setIsEditing(false)}
+              />
+              <div className="mt-1 text-xs text-muted-foreground">
+                {linesDetected > 0 && (
+                  <>
+                    <FileText className="inline w-3 h-3 mr-1" />
+                    {linesDetected} {linesDetected === 1 ? 'line' : 'lines'} detected
+                  </>
+                )}
+              </div>
+            </>
+          )}
         </TabsContent>
 
         <TabsContent value="file" className="mt-2">
-          <div
-            className="relative border-2 border-dashed rounded-lg p-3 text-center transition-colors cursor-pointer border-border hover:border-foreground/50 hover:bg-secondary/30"
-            onClick={onRequestFileDialog || openFileDialog}
-            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
-            onDrop={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              const files = e.dataTransfer.files;
-              if (files?.[0]) onFilePicked(files[0]);
-            }}
-          >
-            <Upload className="w-5 h-5 text-muted-foreground mx-auto mb-2" />
-            <p className="text-sm text-foreground">
-              {uploadedFileName ? 'Click to replace file' : 'Click to upload CSV (or drop it here)'}
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">Up to 10MB</p>
-          </div>
-
-          {uploadedFileName && (
-            <div className="flex items-center justify-between p-2 bg-secondary rounded border mt-2">
-              <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm truncate max-w-[70%]">{uploadedFileName}</span>
+          {(!isEditing && value) ? (
+            <div
+              role="button"
+              onClick={() => setIsEditing(true)}
+              className="min-h-[96px] border rounded-md p-3 bg-background text-foreground font-mono text-sm whitespace-pre-wrap cursor-text"
+              title="Click to edit or replace"
+            >
+              {value}
+              <div className="mt-1 text-xs text-muted-foreground">
+                <FileText className="inline w-3 h-3 mr-1" />
+                {linesDetected} {linesDetected === 1 ? 'line' : 'lines'} detected · Click to edit or replace
               </div>
-              {onClearFile && (
-                <button type="button" onClick={onClearFile} className="text-muted-foreground hover:text-foreground">
-                  <X className="w-4 h-4" />
-                </button>
-              )}
             </div>
+          ) : (
+            <>
+              <div
+                className="relative border-2 border-dashed rounded-lg p-3 text-center transition-colors cursor-pointer border-border hover:border-foreground/50 hover:bg-secondary/30"
+                onClick={onRequestFileDialog || openFileDialog}
+                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const files = e.dataTransfer.files;
+                  if (files?.[0]) onFilePicked(files[0]);
+                }}
+              >
+                <Upload className="w-5 h-5 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-foreground">
+                  {uploadedFileName ? 'Click to replace file' : 'Click to upload CSV (or drop it here)'}
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-1">Up to 10MB</p>
+              </div>
+
+              {uploadedFileName && (
+                <div className="flex items-center justify-between p-2 bg-secondary rounded border mt-2">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm truncate max-w-[70%]">{uploadedFileName}</span>
+                  </div>
+                  {onClearFile && (
+                    <button type="button" onClick={onClearFile} className="text-muted-foreground hover:text-foreground">
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              )}
+            </>
           )}
         </TabsContent>
       </Tabs>

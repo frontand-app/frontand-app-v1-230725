@@ -41,6 +41,7 @@ image = modal.Image.debian_slim().pip_install([
 ])
 
 app = FastAPI(title="Loop Over Rows (Unified)", description="Single endpoint with modes: freestyle, keyword-kombat")
+JOBS: Dict[str, Any] = {}
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -53,6 +54,10 @@ app.add_middleware(
 @app.get("/")
 async def health():
     return {"status": "healthy", "app": "loop-over-rows", "version": "1.0", "modes": ["freestyle", "keyword-kombat"]}
+
+@app.get("/status/{rid}")
+async def status(rid: str):
+    return JOBS.get(rid, {"status": "unknown"})
 
 
 class ProcessingResponse(BaseModel):
@@ -82,6 +87,8 @@ async def process_rows_freestyle(request: FreestyleRequest) -> Dict[str, Any]:
     rid = request.request_id or str(uuid.uuid4())
     start_ts = time.time()
     print(f"[freestyle] start request_id={rid} rows={len(request.data)} batch_size={request.batch_size}")
+    # status store (in-memory best-effort)
+    JOBS[rid] = {"status": "running", "progress": 0, "results": None, "started_at": start_ts}
 
     async def run_row(row_key: str, row_values: List[Any]) -> Optional[Tuple[str, Dict[str, Any]]]:
         try:
@@ -115,7 +122,7 @@ async def process_rows_freestyle(request: FreestyleRequest) -> Dict[str, Any]:
     effective_batch = 10 if request.test_mode else 100
     for i in range(0, len(items), effective_batch):
         batch = items[i:i+effective_batch]
-        print(f"[freestyle] batch_start request_id={rid} batch_index={i//request.batch_size} size={len(batch)}")
+        print(f"[freestyle] batch_start request_id={rid} batch_index={i//effective_batch} size={len(batch)}", flush=True)
         outs = await asyncio.gather(*[run_row(k, v) for k, v in batch], return_exceptions=True)
         # Normalize exceptions to None and log
         normalized_outs = []
@@ -129,9 +136,11 @@ async def process_rows_freestyle(request: FreestyleRequest) -> Dict[str, Any]:
                 continue
             row_key, obj = out
             results.append({"row_key": row_key, **obj})
-        print(f"[freestyle] batch_done request_id={rid} batch_index={i//request.batch_size} processed={len(results)}")
+        JOBS[rid]["progress"] = int((len(results) / max(1, len(items))) * 100)
+        print(f"[freestyle] batch_done request_id={rid} batch_index={i//effective_batch} processed={len(results)}", flush=True)
 
-    print(f"[freestyle] done request_id={rid} total_ms={(time.time()-start_ts)*1000:.0f} processed={len(results)}")
+    print(f"[freestyle] done request_id={rid} total_ms={(time.time()-start_ts)*1000:.0f} processed={len(results)}", flush=True)
+    JOBS[rid].update({"status": "completed", "results": results, "completed_at": time.time(), "progress": 100})
     return {"success": True, "results": results, "processed_count": len(results), "total_count": len(request.data), "request_id": rid}
 
 

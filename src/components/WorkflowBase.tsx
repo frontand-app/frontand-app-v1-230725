@@ -937,6 +937,39 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                   ))}
                 </SelectContent>
               </Select>
+
+              {config.supportsTestMode && (
+                <div className="inline-flex items-center gap-2 ml-4">
+                  <Switch 
+                    checked={testMode} 
+                    onCheckedChange={handleMockModeToggle}
+                    className="data-[state=checked]:bg-foreground"
+                  />
+                  <span className="text-sm font-medium text-foreground">Mock mode</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                        aria-label="Mock mode info"
+                      >
+                        <Info className="h-4 w-4" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent side="bottom" align="start" className="max-w-sm text-sm">
+                      <div className="space-y-2">
+                        <div className="font-medium">What is Mock mode?</div>
+                        <ul className="list-disc pl-5 text-muted-foreground space-y-1">
+                          <li>Processes a tiny sample (up to 2 rows) so you can preview quickly.</li>
+                          <li>Does not use credits and may return simulated results.</li>
+                          <li>No webhooks or emails are sent.</li>
+                          <li>Switch off to run the full workload.</li>
+                        </ul>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -944,17 +977,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
             {config.description}
           </p>
 
-        {config.supportsTestMode && (
-          <div className="flex items-center gap-3 mb-8">
-            <Switch 
-              checked={testMode} 
-              onCheckedChange={handleMockModeToggle}
-              className="data-[state=checked]:bg-foreground"
-            />
-            <span className="font-medium text-foreground">Mock mode</span>
-            <Info className="h-4 w-4 text-muted-foreground" />
-                  </div>
-        )}
+        {/* Mock mode toggle moved next to mode dropdown */}
 
         {/* (Moved) Google Search toggle appears inside the input card */}
 

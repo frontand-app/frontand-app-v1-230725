@@ -152,6 +152,8 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
   const { user } = useAuth();
   const [currentExecutionId, setCurrentExecutionId] = useState<string | null>(null);
   const authRequired = !testMode && !user; // sign-in gating (no inline error)
+  const inputBadgeClass = highlightOutput ? 'bg-muted text-muted-foreground' : 'bg-primary text-primary-foreground';
+  const outputBadgeClass = highlightOutput ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground';
 
   const handleMockModeToggle = (isMockMode: boolean) => {
     setTestMode(isMockMode);
@@ -1003,7 +1005,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                     </AlertDescription>
                   </Alert>
                 )}
-                <div className="bg-primary text-primary-foreground rounded-lg px-3 py-1 text-sm font-medium inline-flex w-fit mb-6">
+                <div className={`${inputBadgeClass} rounded-lg px-3 py-1 text-sm font-medium inline-flex w-fit mb-6`}>
                   YOUR INPUT
                 </div>
 
@@ -1167,7 +1169,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
             <Card className={`border-2 ${highlightOutput ? 'border-primary' : 'border-border'} rounded-2xl h-full`}>
               <CardContent className="p-6 h-full flex flex-col" onMouseDown={() => setInputActive(false)}>
                 <div className="flex items-center justify-between mb-6">
-                  <div className="bg-muted text-muted-foreground rounded-lg px-3 py-1 text-sm font-medium">
+                  <div className={`${outputBadgeClass} rounded-lg px-3 py-1 text-sm font-medium`}>
                     WORKFLOW OUTPUT
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">

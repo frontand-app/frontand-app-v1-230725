@@ -23,6 +23,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { createExecution, updateExecution, buildFilesForResults } from '@/lib/executionApi';
 import * as LucideIcons from 'lucide-react';
 import { TableOutput, TableData } from '@/components/TableOutput';
+import { normalizeResult } from '@/lib/normalizers';
 import { cn } from "@/lib/utils";
 import {
   Command,
@@ -868,65 +869,16 @@ OUTPUT (JSON only; array with single element):
           );
         }
 
-        // Flatten helper: turn output arrays/objects into top-level columns
-        const tryParseJson = (val: any) => {
-          if (typeof val !== 'string') return val;
-          const s = val.trim();
-          if (!s.startsWith('{') && !s.startsWith('[')) return val;
-          try { return JSON.parse(s); } catch { return val; }
-        };
-        const flattenOnce = (value: any) => {
-          const parsed = tryParseJson(value);
-          if (Array.isArray(parsed)) {
-            if (parsed.length === 1 && typeof parsed[0] === 'object' && parsed[0] !== null) {
-              return parsed[0];
-            }
-            return parsed; // keep non-singleton arrays as-is
-          }
-          return parsed;
-        };
-        const toTitle = (k: string) => k === results.output_column_name
-          ? results.output_column_name.replace(/_/g, ' ')
-          : (k.charAt(0).toUpperCase() + k.slice(1).replace(/_/g, ' '));
-
-        const normalizedRows = tableData.map((row: Record<string, any>) => {
-          const out: Record<string, any> = {};
-          Object.entries(row).forEach(([k, v]) => {
-            const shouldFlatten = (
-              k === 'output' ||
-              (config.id === 'loop-over-rows' && k !== 'row_key')
-            );
-            const candidate = shouldFlatten ? flattenOnce(v) : v;
-            if (
-              shouldFlatten &&
-              candidate && typeof candidate === 'object' && !Array.isArray(candidate)
-            ) {
-              Object.entries(candidate).forEach(([innerK, innerV]) => {
-                out[innerK] = innerV;
-              });
-            } else {
-              out[k] = candidate;
-            }
-          });
-          return out;
-        });
-
-        // Build columns from union of keys
-        const allKeys = Array.from(
-          normalizedRows.reduce<Set<string>>((set, r) => {
-            Object.keys(r || {}).forEach((k) => set.add(k));
-            return set;
-          }, new Set())
-        );
-
+        // Normalize to columns/rows using shared normalizer
+        const normalized = normalizeResult(config.id, results);
         const tableOutputData = {
-          columns: allKeys.map((key) => ({
+          columns: normalized.columns.map((key) => ({
             key,
-            label: toTitle(key),
+            label: key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' '),
             type: 'text' as const,
-            sortable: true
+            sortable: true,
           })),
-          rows: normalizedRows
+          rows: normalized.rows,
         };
 
         // Calculate confidence score (mock for now - in real app this would come from AI)

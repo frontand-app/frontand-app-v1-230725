@@ -221,11 +221,21 @@ const createDownloadFile = (name: string, mime: string, content: string): Execut
 
 export const buildFilesForResults = (workflowId: string, results: any): ExecutionFile[] => {
   try {
+    // Use shared normalizer so CSV matches the UI table
     let rows: Array<Record<string, any>> = [];
-    if (Array.isArray(results)) {
-      rows = results as Array<Record<string, any>>;
-    } else if (results && Array.isArray(results.results)) {
-      rows = results.results as Array<Record<string, any>>;
+    try {
+      // dynamic require-style import without await for ESM bundlers
+      const mod: any = (window as any)?.__frontand_normalizers__ || null;
+      if (mod && typeof mod.normalizeResult === 'function') {
+        rows = mod.normalizeResult(workflowId, results).rows;
+      } else {
+        // fallback: naive extraction
+        if (Array.isArray(results)) rows = results as Array<Record<string, any>>;
+        else if (results && Array.isArray(results.results)) rows = results.results as Array<Record<string, any>>;
+      }
+    } catch {
+      if (Array.isArray(results)) rows = results as Array<Record<string, any>>;
+      else if (results && Array.isArray(results.results)) rows = results.results as Array<Record<string, any>>;
     }
     const files: ExecutionFile[] = [];
     if (rows.length > 0) {

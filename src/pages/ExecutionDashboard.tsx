@@ -43,81 +43,19 @@ const ExecutionDashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
 
-  // Mock data for demonstration
+  // Load real executions from in-memory Execution API (replace with DB later)
   useEffect(() => {
-    const mockExecutions: WorkflowExecution[] = [
-      {
-        id: 'exec_001',
-        workflowId: 'loop-over-rows',
-        workflowName: 'Loop Over Rows',
-        status: 'completed',
-        createdAt: '2024-01-15T10:30:00Z',
-        completedAt: '2024-01-15T10:33:00Z',
-        progress: 100,
-        inputData: { csv_data: 'companies.csv', prompt: 'Analyze company websites' },
-        results: { rowsProcessed: 25, successRate: 96 },
-        files: [
-          { id: 'file_001', name: 'processed_companies.csv', type: 'csv', size: 15420, downloadUrl: '#' },
-          { id: 'file_002', name: 'analysis_report.json', type: 'json', size: 8932, downloadUrl: '#' }
-        ],
-        costCredits: 0.75,
-        estimatedTime: 180,
-        actualTime: 175
-      },
-      {
-        id: 'exec_002',
-        workflowId: 'crawl4imprint',
-        workflowName: 'Crawl4Imprint',
-        status: 'running',
-        createdAt: '2024-01-15T11:15:00Z',
-        progress: 65,
-        inputData: { websites: 'legal_sites.csv' },
-        costCredits: 0.45,
-        estimatedTime: 240
-      },
-      {
-        id: 'exec_003',
-        workflowId: 'blog-generator',
-        workflowName: 'AI Blog Generator',
-        status: 'failed',
-        createdAt: '2024-01-15T09:45:00Z',
-        completedAt: '2024-01-15T09:46:30Z',
-        progress: 15,
-        inputData: { topic: 'AI in Healthcare', length: 'medium' },
-        costCredits: 0.05,
-        errorMessage: 'API quota exceeded. Please try again later.',
-        actualTime: 90
-      },
-      {
-        id: 'exec_004',
-        workflowId: 'sentiment-analyzer',
-        workflowName: 'Sentiment Analyzer',
-        status: 'queued',
-        createdAt: '2024-01-15T11:45:00Z',
-        inputData: { text_input: 'Customer feedback analysis' },
-        costCredits: 0.15,
-        estimatedTime: 30
-      },
-      {
-        id: 'exec_005',
-        workflowId: 'csv-transformer',
-        workflowName: 'CSV Transformer',
-        status: 'completed',
-        createdAt: '2024-01-14T16:20:00Z',
-        completedAt: '2024-01-14T16:22:30Z',
-        progress: 100,
-        inputData: { source_csv: 'customer_data.csv', operations: ['validate_emails', 'normalize_names'] },
-        results: { rowsProcessed: 1250, validationErrors: 23 },
-        files: [
-          { id: 'file_003', name: 'cleaned_customer_data.csv', type: 'csv', size: 45680, downloadUrl: '#' }
-        ],
-        costCredits: 0.32,
-        actualTime: 150
+    (async () => {
+      try {
+        const api = await import('@/lib/executionApi');
+        const data = await api.getExecutions();
+        setExecutions(data as unknown as WorkflowExecution[]);
+        setFilteredExecutions(data as unknown as WorkflowExecution[]);
+      } catch (e) {
+        setExecutions([]);
+        setFilteredExecutions([]);
       }
-    ];
-    
-    setExecutions(mockExecutions);
-    setFilteredExecutions(mockExecutions);
+    })();
   }, []);
 
   // Filter executions based on status and search query

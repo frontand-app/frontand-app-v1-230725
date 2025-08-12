@@ -248,7 +248,8 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
     const csvField = activeInputs.find(field => field.type === 'csv');
     if (csvField && inputValues[csvField.id]) {
       const lines = inputValues[csvField.id].trim().split('\n');
-      return testMode ? 1 : Math.max(0, lines.length - 1); // Subtract header
+      const total = Math.max(0, lines.length - 1);
+      return testMode ? Math.min(2, total) : total; // In mock, process up to 2 rows
     }
     
     // For other workflows, assume 1 item
@@ -457,7 +458,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
         const headerIndices = activeHeaders.map(h => parsedData.headers.indexOf(h)).filter(i => i >= 0);
 
         // Format data for Modal API - convert CSV to row-keyed array format
-        const rowsToProcess = testMode ? parsedData.rows.slice(0, 1) : parsedData.rows;
+        const rowsToProcess = testMode ? parsedData.rows.slice(0, 2) : parsedData.rows;
         
         // Convert rows to row-keyed array format as expected by Modal
         const dataDict: Record<string, string[]> = {};

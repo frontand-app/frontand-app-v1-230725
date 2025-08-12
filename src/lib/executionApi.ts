@@ -156,6 +156,89 @@ const calculateAverageExecutionTime = (executions: WorkflowExecution[]): number 
   return Math.round(totalTime / completedWithTime.length);
 };
 
+// Utility: build downloadable files from results
+const buildCsvFromObjects = (rows: Array<Record<string, any>>): string => {
+  if (!rows || rows.length === 0) return '';
+  const headers = Array.from(
+    rows.reduce<Set<string>>((set, r) => {
+      Object.keys(r || {}).forEach((k) => set.add(k));
+      return set;
+    }, new Set())
+  );
+  const escape = (v: any) => {
+    const s = v === null || v === undefined ? '' : String(v);
+    if (s.includes(',') || s.includes('\n') || s.includes('"')) {
+      return '"' + s.replace(/"/g, '""') + '"';
+    }
+    return s;
+  };
+  const headerLine = headers.join(',');
+  const lines = rows.map((r) => headers.map((h) => escape(r[h])).join(','));
+  return [headerLine, ...lines].join('\n');
+};
+
+const createDownloadFile = (name: string, mime: string, content: string): ExecutionFile => {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  return {
+    id: 'file_' + Math.random().toString(36).slice(2),
+    name,
+    type: mime.split('/')[1] || 'txt',
+    size: blob.size,
+    downloadUrl: url,
+    createdAt: new Date().toISOString(),
+  };
+};
+
+export const buildFilesForResults = (workflowId: string, results: any): ExecutionFile[] => {
+  try {
+    let rows: Array<Record<string, any>> = [];
+    if (Array.isArray(results)) {
+      rows = results as Array<Record<string, any>>;
+    } else if (results && Array.isArray(results.results)) {
+      rows = results.results as Array<Record<string, any>>;
+    }
+    const files: ExecutionFile[] = [];
+    if (rows.length > 0) {
+      const csv = buildCsvFromObjects(rows);
+      files.push(createDownloadFile('results.csv', 'text/csv', csv));
+    }
+    files.push(createDownloadFile('results.json', 'application/json', JSON.stringify(results, null, 2)));
+    return files;
+  } catch {
+    return [];
+  }
+};
+
+export const calculateCredits = (params: {
+  workflowId: string;
+  rowsProcessed?: number;
+  promptChars?: number;
+  actualTimeSeconds?: number;
+  cpuCores?: number;
+  memoryGB?: number;
+}): number => {
+  const {
+    workflowId,
+    rowsProcessed = 1,
+    promptChars = 500,
+    actualTimeSeconds = 10,
+    cpuCores = 8,
+    memoryGB = 32,
+  } = params;
+  // Estimate tokens ~ chars/4
+  const estTokens = Math.max(1, Math.round((promptChars / 4) * rowsProcessed));
+  const tokenRate = 0.000002; // credits per token (tunable)
+  const computeRate = 0.00005; // credits per second per CPU core
+  const memoryRate = 0.000005; // credits per second per GB RAM
+  const tokenCost = estTokens * tokenRate;
+  const computeCost = actualTimeSeconds * cpuCores * computeRate;
+  const memCost = actualTimeSeconds * memoryGB * memoryRate;
+  const base = workflowId === 'loop-over-rows' ? 0.02 : 0.01;
+  const total = base + tokenCost + computeCost + memCost;
+  return Math.round(total * 100) / 100; // 2 decimals
+};
+
 // Mock workflow processing function
 const processExecution = async (executionId: string, testMode: boolean = false) => {
   const execution = await getExecution(executionId);
@@ -181,8 +264,13 @@ const processExecution = async (executionId: string, testMode: boolean = false) 
 
     // Mock results based on workflow type
     const results = generateMockResults(execution.workflowId, execution.inputData, testMode);
-    const files = generateMockFiles(execution.workflowId, testMode);
-    const costCredits = calculateMockCost(execution.workflowId, execution.inputData, testMode);
+    const files = buildFilesForResults(execution.workflowId, results);
+    const costCredits = calculateCredits({
+      workflowId: execution.workflowId,
+      rowsProcessed: (results && Array.isArray((results as any).results)) ? (results as any).results.length : 10,
+      promptChars: JSON.stringify(execution.inputData || {}).length,
+      actualTimeSeconds: (totalSteps * stepTime) / 1000,
+    });
 
     // Complete the execution
     await updateExecution(executionId, {
@@ -238,107 +326,10 @@ const generateMockResults = (workflowId: string, inputData: any, testMode: boole
 };
 
 // Generate mock files based on workflow type
-const generateMockFiles = (workflowId: string, testMode: boolean): ExecutionFile[] => {
-  const baseUrl = '/api/executions/files/';
-  
-  switch (workflowId) {
-    case 'loop-over-rows':
-      return [
-        {
-          id: 'file_' + Date.now(),
-          name: testMode ? 'test_results.csv' : 'processed_data.csv',
-          type: 'csv',
-          size: testMode ? 1420 : 45680,
-          downloadUrl: `${baseUrl}processed_data.csv`,
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: 'file_' + (Date.now() + 1),
-          name: 'analysis_summary.json',
-          type: 'json',
-          size: testMode ? 892 : 8932,
-          downloadUrl: `${baseUrl}analysis_summary.json`,
-          createdAt: new Date().toISOString()
-        }
-      ];
-    
-    case 'crawl4imprint':
-      return [
-        {
-          id: 'file_' + Date.now(),
-          name: testMode ? 'test_legal_data.csv' : 'legal_compliance_data.csv',
-          type: 'csv',
-          size: testMode ? 2150 : 67890,
-          downloadUrl: `${baseUrl}legal_compliance_data.csv`,
-          createdAt: new Date().toISOString()
-        }
-      ];
-    
-    case 'blog-generator':
-      return [
-        {
-          id: 'file_' + Date.now(),
-          name: 'generated_blog_post.md',
-          type: 'md',
-          size: testMode ? 3240 : 15670,
-          downloadUrl: `${baseUrl}generated_blog_post.md`,
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: 'file_' + (Date.now() + 1),
-          name: 'seo_metadata.json',
-          type: 'json',
-          size: 567,
-          downloadUrl: `${baseUrl}seo_metadata.json`,
-          createdAt: new Date().toISOString()
-        }
-      ];
-    
-    default:
-      return [
-        {
-          id: 'file_' + Date.now(),
-          name: testMode ? 'test_output.json' : 'results.json',
-          type: 'json',
-          size: testMode ? 1200 : 12400,
-          downloadUrl: `${baseUrl}results.json`,
-          createdAt: new Date().toISOString()
-        }
-      ];
-  }
-};
+// Removed old generateMockFiles that returned 404 links
 
 // Calculate mock cost based on workflow and input data
-const calculateMockCost = (workflowId: string, inputData: any, testMode: boolean): number => {
-  if (testMode) return 0; // No cost for test mode
-  
-  let baseCost = 0.05;
-  
-  switch (workflowId) {
-    case 'loop-over-rows':
-      // Cost based on number of rows
-      const estimatedRows = inputData.csv_data ? 100 : 10;
-      baseCost = 0.02 + (estimatedRows * 0.001);
-      break;
-    
-    case 'blog-generator':
-      // Cost based on length
-      const lengthMultiplier = inputData.length === 'long' ? 2 : inputData.length === 'comprehensive' ? 3 : 1;
-      baseCost = 0.08 * lengthMultiplier;
-      break;
-    
-    case 'crawl4imprint':
-      // Cost based on number of sites
-      const estimatedSites = inputData.websites ? 25 : 5;
-      baseCost = 0.03 + (estimatedSites * 0.002);
-      break;
-    
-    default:
-      baseCost = 0.05;
-  }
-  
-  return Math.round(baseCost * 100) / 100; // Round to 2 decimal places
-};
+const calculateMockCost = (_workflowId: string, _inputData: any, _testMode: boolean): number => 0;
 
 // Get workflow name by ID (replace with actual workflow registry lookup)
 const getWorkflowName = (workflowId: string): string => {

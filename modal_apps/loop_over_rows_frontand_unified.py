@@ -67,6 +67,7 @@ async def health_check():
     timeout=86400,
     cpu=2,
     memory=2048,
+    max_containers=20,
 )
 @app.post("/process")
 async def process_unified(body: Dict[str, Any]) -> Any:

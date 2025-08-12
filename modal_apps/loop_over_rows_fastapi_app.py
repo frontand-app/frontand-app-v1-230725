@@ -67,6 +67,7 @@ class ProcessingResponse(BaseModel):
     timeout=86400,
     cpu=2,
     memory=4096,
+    max_containers=20,
 )
 async def process_rows_freestyle(request: FreestyleRequest) -> Dict[str, Any]:
     """Process freestyle mode using Gemini per row."""
@@ -76,7 +77,7 @@ async def process_rows_freestyle(request: FreestyleRequest) -> Dict[str, Any]:
 
     genai.configure(api_key=os.environ["GEMINI_API_KEY"])
     model = genai.GenerativeModel('models/gemini-2.5-flash')
-    throttler = Throttler(rate_limit=8, period=1.0)
+    throttler = Throttler(rate_limit=16, period=1.0)
     rid = request.request_id or str(uuid.uuid4())
     start_ts = time.time()
     print(f"[freestyle] start request_id={rid} rows={len(request.data)} batch_size={request.batch_size}")
@@ -112,8 +113,15 @@ async def process_rows_freestyle(request: FreestyleRequest) -> Dict[str, Any]:
     for i in range(0, len(items), request.batch_size):
         batch = items[i:i+request.batch_size]
         print(f"[freestyle] batch_start request_id={rid} batch_index={i//request.batch_size} size={len(batch)}")
-        outs = await asyncio.gather(*[run_row(k, v) for k, v in batch])
-        for out in outs:
+        outs = await asyncio.gather(*[run_row(k, v) for k, v in batch], return_exceptions=True)
+        # Normalize exceptions to None and log
+        normalized_outs = []
+        for item in outs:
+            if isinstance(item, Exception):
+                print(f"[freestyle] row_exception request_id={rid} err={item}")
+                continue
+            normalized_outs.append(item)
+        for out in normalized_outs:
             if out is None:
                 continue
             row_key, obj = out

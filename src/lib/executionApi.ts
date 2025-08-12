@@ -377,43 +377,4 @@ export const subscribeToExecutionUpdates = (
   return () => clearInterval(interval);
 };
 
-// Export all mock executions for development
-export const getMockExecutions = (): WorkflowExecution[] => {
-  return [
-    {
-      id: 'exec_001',
-      workflowId: 'loop-over-rows',
-      workflowName: 'Loop Over Rows',
-      status: 'completed',
-      createdAt: '2024-01-15T10:30:00Z',
-      completedAt: '2024-01-15T10:33:00Z',
-      progress: 100,
-      inputData: { csv_data: 'companies.csv', prompt: 'Analyze company websites' },
-      results: { rowsProcessed: 25, successRate: 96 },
-      files: [
-        { id: 'file_001', name: 'processed_companies.csv', type: 'csv', size: 15420, downloadUrl: '#', createdAt: '2024-01-15T10:33:00Z' },
-        { id: 'file_002', name: 'analysis_report.json', type: 'json', size: 8932, downloadUrl: '#', createdAt: '2024-01-15T10:33:00Z' }
-      ],
-      costCredits: 0.75,
-      estimatedTime: 180,
-      actualTime: 175
-    },
-    {
-      id: 'exec_002',
-      workflowId: 'crawl4imprint',
-      workflowName: 'Crawl4Imprint',
-      status: 'running',
-      createdAt: '2024-01-15T11:15:00Z',
-      progress: 65,
-      inputData: { websites: 'legal_sites.csv' },
-      costCredits: 0.45,
-      estimatedTime: 240
-    }
-  ];
-};
-
-// Initialize with mock data for development
-if (executions.length === 0) {
-  executions = getMockExecutions();
-  executionIdCounter = executions.length + 1;
-} 
+// Note: Removed mock initialization so the dashboard only reflects real in-memory executions from this session.

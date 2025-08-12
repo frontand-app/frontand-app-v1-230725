@@ -20,7 +20,7 @@ import MockPreview from '@/components/shared/MockPreview';
 import GoogleSearchToggle from '@/components/shared/GoogleSearchToggle';
 import ColumnSelectorChips from '@/components/shared/ColumnSelectorChips';
 import { useAuth } from '@/hooks/useAuth';
-import { createExecution, updateExecution } from '@/lib/executionApi';
+import { createExecution, updateExecution, buildFilesForResults } from '@/lib/executionApi';
 import * as LucideIcons from 'lucide-react';
 import { TableOutput, TableData } from '@/components/TableOutput';
 import { cn } from "@/lib/utils";
@@ -692,9 +692,12 @@ OUTPUT (JSON only; array with single element):
       }, 800);
 
       if (currentExecutionId) {
+        // Build downloadable files (CSV/JSON) for the dashboard
+        const files = buildFilesForResults(config.id, result);
         await updateExecution(currentExecutionId, {
           status: 'completed',
           results: result,
+          files,
           progress: 100,
           completedAt: new Date().toISOString()
         });

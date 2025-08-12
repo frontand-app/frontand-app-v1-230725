@@ -115,7 +115,7 @@ const Layout = ({ children }: LayoutProps) => {
                 </DropdownMenu>
               ) : (
                 <Button variant="outline" className="bg-primary text-primary-foreground border-primary hover:bg-primary/90 rounded-full px-6" asChild>
-                  <Link to="/auth">Sign In</Link>
+                  <Link to={`/auth?redirect=${encodeURIComponent(location.pathname + location.search)}`}>Sign In</Link>
                 </Button>
               )}
             </div>
@@ -186,7 +186,7 @@ const Layout = ({ children }: LayoutProps) => {
                     </div>
                   ) : (
                     <Button size="sm" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" asChild>
-                      <Link to="/auth">Sign In</Link>
+                      <Link to={`/auth?redirect=${encodeURIComponent(location.pathname + location.search)}`}>Sign In</Link>
                     </Button>
                   )}
                 </div>

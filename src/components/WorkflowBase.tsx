@@ -143,6 +143,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
   const [selectedCsvColumns, setSelectedCsvColumns] = useState<string[]>([]);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const highlightOutput = isExecuting || showResults;
 
   const handleMockModeToggle = (isMockMode: boolean) => {
     setTestMode(isMockMode);
@@ -931,7 +932,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto items-stretch content-stretch">
           {/* INPUT SECTION */}
           <div className="space-y-6">
-            <Card className="border-2 border-primary rounded-2xl h-full">
+            <Card className={`border-2 ${highlightOutput ? 'border-border' : 'border-primary'} rounded-2xl h-full`}>
               <CardContent className="p-6 h-full flex flex-col">
                 <div className="bg-primary text-primary-foreground rounded-lg px-3 py-1 text-sm font-medium inline-flex w-fit mb-6">
                   YOUR INPUT
@@ -1081,7 +1082,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
 
           {/* OUTPUT SECTION */}
           <div className="space-y-6">
-            <Card className="border-2 border-border rounded-2xl h-full">
+            <Card className={`border-2 ${highlightOutput ? 'border-primary' : 'border-border'} rounded-2xl h-full`}>
               <CardContent className="p-6 h-full flex flex-col">
                 <div className="flex items-center justify-between mb-6">
                   <div className="bg-muted text-muted-foreground rounded-lg px-3 py-1 text-sm font-medium">

@@ -43,19 +43,33 @@ const ExecutionDashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
 
-  // Load real executions from in-memory Execution API (replace with DB later)
+  // Load executions and subscribe to changes/poll
   useEffect(() => {
+    let isMounted = true;
+    let interval: number | undefined;
     (async () => {
       try {
         const api = await import('@/lib/executionApi');
         const data = await api.getExecutions();
+        if (!isMounted) return;
         setExecutions(data as unknown as WorkflowExecution[]);
         setFilteredExecutions(data as unknown as WorkflowExecution[]);
+        // Lightweight polling every 1s to reflect progress and new runs
+        interval = window.setInterval(async () => {
+          const latest = await api.getExecutions();
+          if (!isMounted) return;
+          setExecutions(latest as unknown as WorkflowExecution[]);
+        }, 1000);
       } catch (e) {
+        if (!isMounted) return;
         setExecutions([]);
         setFilteredExecutions([]);
       }
     })();
+    return () => {
+      isMounted = false;
+      if (interval) window.clearInterval(interval);
+    };
   }, []);
 
   // Filter executions based on status and search query

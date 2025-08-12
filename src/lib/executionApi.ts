@@ -50,6 +50,32 @@ export interface UpdateExecutionRequest {
 let executions: WorkflowExecution[] = [];
 let executionIdCounter = 1;
 
+// Persistence helpers so executions survive navigation/refresh within the same browser
+const STORAGE_KEY = 'frontand_executions_v1';
+const persistExecutions = () => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(executions));
+  } catch {}
+};
+
+(() => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        executions = parsed as WorkflowExecution[];
+        // Derive next ID counter from highest existing id
+        const maxId = executions
+          .map((e) => parseInt((e.id || '').replace(/[^0-9]/g, ''), 10))
+          .filter((n) => !isNaN(n))
+          .reduce((m, n) => Math.max(m, n), 0);
+        executionIdCounter = Math.max(1, maxId + 1);
+      }
+    }
+  } catch {}
+})();
+
 // Generate unique execution ID
 const generateExecutionId = (): string => {
   return `exec_${String(executionIdCounter++).padStart(6, '0')}`;
@@ -69,6 +95,7 @@ export const createExecution = async (request: CreateExecutionRequest): Promise<
   };
 
   executions.push(execution);
+  persistExecutions();
 
   // Start processing asynchronously
   processExecution(execution.id, request.testMode);
@@ -97,6 +124,7 @@ export const updateExecution = async (
   if (index === -1) return null;
 
   executions[index] = { ...executions[index], ...updates };
+  persistExecutions();
   return executions[index];
 };
 
@@ -128,6 +156,7 @@ export const deleteExecution = async (executionId: string): Promise<boolean> => 
   if (index === -1) return false;
 
   executions.splice(index, 1);
+  persistExecutions();
   return true;
 };
 

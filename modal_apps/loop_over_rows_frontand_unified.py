@@ -65,9 +65,9 @@ async def health_check():
     image=image,
     secrets=[modal.Secret.from_name("gemini-api-key")],
     timeout=86400,
-    cpu=2,
-    memory=2048,
-    max_containers=20,
+    cpu=4,
+    memory=8192,
+    max_containers=1,
 )
 @app.post("/process")
 async def process_unified(body: Dict[str, Any]) -> Any:

@@ -65,9 +65,9 @@ class ProcessingResponse(BaseModel):
     image=image,
     secrets=[modal.Secret.from_name("gemini-api-key")],
     timeout=86400,
-    cpu=2,
-    memory=4096,
-    max_containers=20,
+    cpu=8,
+    memory=32768,
+    max_containers=1,
 )
 async def process_rows_freestyle(request: FreestyleRequest) -> Dict[str, Any]:
     """Process freestyle mode using Gemini per row."""
@@ -77,7 +77,8 @@ async def process_rows_freestyle(request: FreestyleRequest) -> Dict[str, Any]:
 
     genai.configure(api_key=os.environ["GEMINI_API_KEY"])
     model = genai.GenerativeModel('models/gemini-2.5-flash')
-    throttler = Throttler(rate_limit=16, period=1.0)
+    # Allow high concurrency within a single powerful container
+    throttler = Throttler(rate_limit=100, period=1.0)
     rid = request.request_id or str(uuid.uuid4())
     start_ts = time.time()
     print(f"[freestyle] start request_id={rid} rows={len(request.data)} batch_size={request.batch_size}")
@@ -110,8 +111,10 @@ async def process_rows_freestyle(request: FreestyleRequest) -> Dict[str, Any]:
 
     items = list(request.data.items())
     results: List[Dict[str, Any]] = []
-    for i in range(0, len(items), request.batch_size):
-        batch = items[i:i+request.batch_size]
+    # Use a larger effective batch size for in-container concurrency
+    effective_batch = 10 if request.test_mode else 100
+    for i in range(0, len(items), effective_batch):
+        batch = items[i:i+effective_batch]
         print(f"[freestyle] batch_start request_id={rid} batch_index={i//request.batch_size} size={len(batch)}")
         outs = await asyncio.gather(*[run_row(k, v) for k, v in batch], return_exceptions=True)
         # Normalize exceptions to None and log

@@ -36,6 +36,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Workflow Configuration Types
 export interface WorkflowField {
@@ -149,6 +150,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
   const [inputActive, setInputActive] = useState<boolean>(true);
   const { user } = useAuth();
   const [currentExecutionId, setCurrentExecutionId] = useState<string | null>(null);
+  const authRequired = !testMode && !user; // sign-in gating (no inline error)
 
   const handleMockModeToggle = (isMockMode: boolean) => {
     setTestMode(isMockMode);
@@ -188,10 +190,6 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
   // Keep column chips in sync when user pastes CSV instead of uploading a file
   useEffect(() => {
     try {
-      if (!testMode && !user) {
-        setError('Please sign in to run full (non-mock) executions.');
-        return;
-      }
       if (config.id === 'loop-over-rows' && mode === 'freestyle' && inputValues.csv_data) {
         const parsed = parseCSVData(inputValues.csv_data);
         if (parsed) {
@@ -1114,22 +1112,34 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
 
                   {/* Run Button */}
                   <div className="flex items-center gap-3 pt-4 mt-auto">
-                <Button
-                  onClick={handleExecute}
-                  disabled={isExecuting}
-                      className="flex-1 py-6 text-sm font-medium rounded-full bg-foreground hover:bg-foreground/90 text-background"
-                    >
-                      RUN WORKFLOW
-                      <div className="ml-2">→</div>
-                </Button>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex-1">
+                            <Button
+                              onClick={handleExecute}
+                              disabled={isExecuting || authRequired}
+                              className="w-full py-6 text-sm font-medium rounded-full bg-foreground hover:bg-foreground/90 text-background disabled:opacity-60"
+                            >
+                              RUN WORKFLOW
+                              <div className="ml-2">→</div>
+                            </Button>
+                          </div>
+                        </TooltipTrigger>
+                        {authRequired && (
+                          <TooltipContent>
+                            Sign in required for full run
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
 
-                {error && (
-                    <Alert variant="destructive">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>
-                      {error}
-                    </AlertDescription>
+                {/* remove inline auth error; keep space for other errors */}
+                {error && !authRequired && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{error}</AlertDescription>
                   </Alert>
                 )}
                 </div>

@@ -70,7 +70,7 @@ async def health_check():
     image=image,
     secrets=[modal.Secret.from_name("gemini-api-key")],
     max_containers=10,
-    timeout=600,  # 10 minutes
+    timeout=86400,
     cpu=2,
     memory=2048
 )
@@ -392,7 +392,7 @@ async def keyword_kombat_frontand(request: KeywordKombatRequest) -> KeywordKomba
 
 @modal_app.function(
     image=image,
-    timeout=300,
+    timeout=86400,
     memory=1024,
     min_containers=0
 )

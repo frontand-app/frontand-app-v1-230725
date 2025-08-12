@@ -3,6 +3,7 @@ import time
 import json
 import asyncio
 from typing import List, Dict, Any, Optional, Tuple
+import uuid
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,6 +18,7 @@ class FreestyleRequest(BaseModel):
     enable_google_search: bool = False
     test_mode: bool = False
     mode: Optional[str] = None
+    request_id: Optional[str] = None
 
 
 class KeywordKombatRequest(BaseModel):
@@ -26,6 +28,7 @@ class KeywordKombatRequest(BaseModel):
     enable_google_search: bool = False
     test_mode: bool = False
     mode: Optional[str] = None
+    request_id: Optional[str] = None
 
 
 modal_app = modal.App("loop-over-rows")
@@ -61,7 +64,7 @@ class ProcessingResponse(BaseModel):
 @modal_app.function(
     image=image,
     secrets=[modal.Secret.from_name("gemini-api-key")],
-    timeout=1800,
+    timeout=86400,
     cpu=2,
     memory=4096,
 )
@@ -74,9 +77,14 @@ async def process_rows_freestyle(request: FreestyleRequest) -> Dict[str, Any]:
     genai.configure(api_key=os.environ["GEMINI_API_KEY"])
     model = genai.GenerativeModel('models/gemini-2.5-flash')
     throttler = Throttler(rate_limit=8, period=1.0)
+    rid = request.request_id or str(uuid.uuid4())
+    start_ts = time.time()
+    print(f"[freestyle] start request_id={rid} rows={len(request.data)} batch_size={request.batch_size}")
 
     async def run_row(row_key: str, row_values: List[Any]) -> Optional[Tuple[str, Dict[str, Any]]]:
         try:
+            row_start = time.time()
+            print(f"[freestyle] row_start request_id={rid} row_key={row_key}")
             row_dict = {h: v for h, v in zip(request.headers, row_values)}
             prompt = f"Row: {json.dumps(row_dict)}\n\nInstructions: {request.prompt}\n\nReturn strict JSON only."
             async with throttler:
@@ -93,28 +101,33 @@ async def process_rows_freestyle(request: FreestyleRequest) -> Dict[str, Any]:
             obj = json.loads(txt)
             if not isinstance(obj, dict):
                 obj = {"output": obj}
+            print(f"[freestyle] row_done request_id={rid} row_key={row_key} ms={(time.time()-row_start)*1000:.0f}")
             return row_key, obj
         except Exception:
+            print(f"[freestyle] row_error request_id={rid} row_key={row_key}")
             return None
 
     items = list(request.data.items())
     results: List[Dict[str, Any]] = []
     for i in range(0, len(items), request.batch_size):
         batch = items[i:i+request.batch_size]
+        print(f"[freestyle] batch_start request_id={rid} batch_index={i//request.batch_size} size={len(batch)}")
         outs = await asyncio.gather(*[run_row(k, v) for k, v in batch])
         for out in outs:
             if out is None:
                 continue
             row_key, obj = out
             results.append({"row_key": row_key, **obj})
+        print(f"[freestyle] batch_done request_id={rid} batch_index={i//request.batch_size} processed={len(results)}")
 
-    return {"success": True, "results": results, "processed_count": len(results), "total_count": len(request.data)}
+    print(f"[freestyle] done request_id={rid} total_ms={(time.time()-start_ts)*1000:.0f} processed={len(results)}")
+    return {"success": True, "results": results, "processed_count": len(results), "total_count": len(request.data), "request_id": rid}
 
 
 @modal_app.function(
     image=image,
     secrets=[modal.Secret.from_name("gemini-api-key")],
-    timeout=900,
+    timeout=86400,
     cpu=2,
     memory=2048,
 )
@@ -126,6 +139,8 @@ async def process_keyword_kombat(req: KeywordKombatRequest) -> List[Dict[str, An
     genai.configure(api_key=os.environ["GEMINI_API_KEY"])
     model = genai.GenerativeModel('models/gemini-2.5-flash')
     throttler = Throttler(rate_limit=8, period=1.0)
+    rid = req.request_id or str(uuid.uuid4())
+    print(f"[kombat] start request_id={rid} keywords={len(req.keywords)}")
 
     research_prompt = f"Analysiere {req.company_url} und gib JSON mit company_name, company_description zurück."
     if req.enable_google_search:
@@ -165,8 +180,10 @@ async def process_keyword_kombat(req: KeywordKombatRequest) -> List[Dict[str, An
             score = obj.get("RelevanceScore", 0)
             if isinstance(score, (int, float)):
                 obj["RelevanceScore"] = int(max(10, min(100, score)))
+            print(f"[kombat] keyword_done request_id={rid} kw={kw} score={obj.get('RelevanceScore')}")
             return obj
         except Exception:
+            print(f"[kombat] keyword_error request_id={rid} kw={kw}")
             return None
 
     kws = req.keywords[:3] if req.test_mode else req.keywords
@@ -180,10 +197,11 @@ async def process_keyword_kombat(req: KeywordKombatRequest) -> List[Dict[str, An
             return [{"Keyword": kw, "RelevanceScore": 90, "Rationale": "Testmodus: Beispielausgabe für die UI"} for kw in kws]
         # Relax threshold slightly in production if nothing clears 80
         results = [o for o in results_raw if o.get("RelevanceScore", 0) >= 50]
+    print(f"[kombat] done request_id={rid} items={len(results)}")
     return results
 
 
-@modal_app.function(image=image, timeout=300, memory=1024, min_containers=0)
+@modal_app.function(image=image, timeout=86400, memory=1024, min_containers=0)
 @modal.asgi_app()
 def fastapi_app():
     return app
@@ -192,15 +210,20 @@ def fastapi_app():
 @app.post("/process")
 async def process_unified(body: Dict[str, Any]):
     start = time.time()
+    print(f"[fastapi_app] /process received; body keys={list(body.keys())}")
     mode = (body.get("mode") or "freestyle").strip()
     try:
         if mode == "keyword-kombat":
             req = KeywordKombatRequest(**body)
-            results = process_keyword_kombat.remote(req)
+            print("[fastapi_app] dispatching process_keyword_kombat.remote.aio ...")
+            results = await process_keyword_kombat.remote.aio(req)
+            print("[fastapi_app] keyword_kombat completed; items=", len(results))
             return ProcessingResponse(results=results, processing_time=time.time() - start, items_processed=len(results))
         # freestyle
         req = FreestyleRequest(**body)
-        out = process_rows_freestyle.remote(req)
+        print("[fastapi_app] dispatching process_rows_freestyle.remote.aio ...")
+        out = await process_rows_freestyle.remote.aio(req)
+        print("[fastapi_app] freestyle completed; items=", out.get("processed_count", 0))
         # passthrough existing structure
         return out
     except Exception as e:

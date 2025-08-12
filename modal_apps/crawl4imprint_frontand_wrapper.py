@@ -68,7 +68,7 @@ async def crawl_imprint_frontand(request: Crawl4ImprintRequest) -> Crawl4Imprint
             working_backend_url,
             json=working_backend_request,
             headers={"Content-Type": "application/json"},
-            timeout=120
+            timeout=3600
         )
         
         if response.status_code != 200:
@@ -117,7 +117,7 @@ async def crawl_imprint_frontand(request: Crawl4ImprintRequest) -> Crawl4Imprint
     image=modal.Image.debian_slim().pip_install([
         "fastapi", "requests", "pydantic"
     ]),
-    timeout=300,
+    timeout=86400,
     memory=1024,
     min_containers=0
 )

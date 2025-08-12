@@ -19,6 +19,8 @@ import CsvPlaintextInput from '@/components/shared/CsvPlaintextInput';
 import MockPreview from '@/components/shared/MockPreview';
 import GoogleSearchToggle from '@/components/shared/GoogleSearchToggle';
 import ColumnSelectorChips from '@/components/shared/ColumnSelectorChips';
+import { useAuth } from '@/hooks/useAuth';
+import { createExecution, updateExecution } from '@/lib/executionApi';
 import * as LucideIcons from 'lucide-react';
 import { TableOutput, TableData } from '@/components/TableOutput';
 import { cn } from "@/lib/utils";
@@ -144,6 +146,9 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
   const [selectedCsvColumns, setSelectedCsvColumns] = useState<string[]>([]);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const highlightOutput = isExecuting || showResults;
+  const [inputActive, setInputActive] = useState<boolean>(true);
+  const { user } = useAuth();
+  const [currentExecutionId, setCurrentExecutionId] = useState<string | null>(null);
 
   const handleMockModeToggle = (isMockMode: boolean) => {
     setTestMode(isMockMode);
@@ -183,6 +188,10 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
   // Keep column chips in sync when user pastes CSV instead of uploading a file
   useEffect(() => {
     try {
+      if (!testMode && !user) {
+        setError('Please sign in to run full (non-mock) executions.');
+        return;
+      }
       if (config.id === 'loop-over-rows' && mode === 'freestyle' && inputValues.csv_data) {
         const parsed = parseCSVData(inputValues.csv_data);
         if (parsed) {
@@ -533,6 +542,15 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
 
       console.log('Sending request to:', config.endpoint, requestData);
 
+      // Create execution record (for dashboard) when starting
+      const exec = await createExecution({
+        workflowId: config.id,
+        inputData: requestData,
+        testMode: testMode,
+        userId: user?.id
+      });
+      setCurrentExecutionId(exec.id);
+
       // Endpoint: allow per-mode override while we unify backend
       // Single unified endpoint handles all modes
       const endpointToUse = config.endpoint;
@@ -566,6 +584,15 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
         setResults(result);
         setShowResults(true);
       }, 800);
+
+      if (currentExecutionId) {
+        await updateExecution(currentExecutionId, {
+          status: 'completed',
+          results: result,
+          progress: 100,
+          completedAt: new Date().toISOString()
+        });
+      }
       
     } catch (err: any) {
       console.error('Execution error:', err);
@@ -573,6 +600,9 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
       setIsExecuting(false);
       setLoadingProgress(0);
       setLoadingPhrase('');
+      if (currentExecutionId) {
+        await updateExecution(currentExecutionId, { status: 'failed', errorMessage: err?.message || 'Error' });
+      }
     }
   };
 
@@ -932,8 +962,8 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto items-stretch content-stretch">
           {/* INPUT SECTION */}
           <div className="space-y-6">
-            <Card className={`border-2 ${highlightOutput ? 'border-border' : 'border-primary'} rounded-2xl h-full`}>
-              <CardContent className="p-6 h-full flex flex-col">
+            <Card className={`border-2 ${highlightOutput ? 'border-border' : 'border-primary'} rounded-2xl h-full ${highlightOutput ? 'opacity-80' : 'opacity-100'}`}>
+              <CardContent className="p-6 h-full flex flex-col" onMouseDown={() => setInputActive(true)}>
                 <div className="bg-primary text-primary-foreground rounded-lg px-3 py-1 text-sm font-medium inline-flex w-fit mb-6">
                   YOUR INPUT
                 </div>
@@ -1083,7 +1113,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
           {/* OUTPUT SECTION */}
           <div className="space-y-6">
             <Card className={`border-2 ${highlightOutput ? 'border-primary' : 'border-border'} rounded-2xl h-full`}>
-              <CardContent className="p-6 h-full flex flex-col">
+              <CardContent className="p-6 h-full flex flex-col" onMouseDown={() => setInputActive(false)}>
                 <div className="flex items-center justify-between mb-6">
                   <div className="bg-muted text-muted-foreground rounded-lg px-3 py-1 text-sm font-medium">
                     WORKFLOW OUTPUT
@@ -1115,7 +1145,13 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                           {Math.max(0, Math.round(loadingProgress))}%
                         </span>
                         <span>
-                          Est. {getEstimatedTime().min}-{getEstimatedTime().max}s
+                          {(() => {
+                            const est = getEstimatedTime();
+                            const avg = Math.round((est.min + est.max) / 2);
+                            return avg <= 60
+                              ? `Hold on ~${avg}s`
+                              : `This may take ~${Math.round(avg / 60)} min. We'll email you when it's done.`;
+                          })()}
                         </span>
                       </div>
                     </div>

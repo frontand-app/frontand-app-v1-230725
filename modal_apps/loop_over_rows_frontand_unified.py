@@ -64,13 +64,18 @@ async def health_check():
 @modal_app.function(
     image=image,
     secrets=[modal.Secret.from_name("gemini-api-key")],
-    timeout=600,
+    timeout=86400,
     cpu=2,
     memory=2048,
 )
 @app.post("/process")
 async def process_unified(body: Dict[str, Any]) -> Any:
     start = time.time()
+    print(f"[unified] /process received; mode={body.get('mode')} keys={list(body.keys())}")
+    # Ensure request_id exists and is forwarded downstream
+    import uuid as _uuid
+    rid = body.get('request_id') or str(_uuid.uuid4())
+    body['request_id'] = rid
 
     mode = (body.get("mode") or "freestyle").strip()
 
@@ -86,10 +91,13 @@ async def process_unified(body: Dict[str, Any]) -> Any:
                 "keyword_variable": req.keyword_variable,
                 "enable_google_search": req.enable_google_search,
                 "test_mode": req.test_mode,
-            }, timeout=300)
+                "request_id": rid,
+            }, timeout=3600)
             if proxied.status_code != 200:
                 raise HTTPException(status_code=proxied.status_code, detail=f"Kombat upstream error: {proxied.text}")
-            return proxied.json()
+            out = proxied.json()
+            print(f"[unified] kombat proxy ok; items={len(out) if isinstance(out, list) else 'n/a'}")
+            return out
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Keyword Kombat processing failed: {e}")
 
@@ -107,10 +115,13 @@ async def process_unified(body: Dict[str, Any]) -> Any:
             "prompt": req.prompt,
             "batch_size": req.batch_size,
             "enable_google_search": req.enable_google_search,
-        }, timeout=300)
+            "request_id": rid,
+        }, timeout=3600)
         if resp.status_code != 200:
             raise HTTPException(status_code=resp.status_code, detail=f"Upstream error: {resp.text}")
-        return resp.json()
+        out = resp.json()
+        print(f"[unified] freestyle proxy ok; keys={list(out.keys())}")
+        return out
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Freestyle processing failed: {e}")
 
@@ -118,7 +129,7 @@ async def process_unified(body: Dict[str, Any]) -> Any:
 @modal_app.function(
     image=image,
     secrets=[modal.Secret.from_name("gemini-api-key")],
-    timeout=600,
+    timeout=86400,
     cpu=2,
     memory=2048,
 )
@@ -190,7 +201,7 @@ async def _process_keyword_kombat(keywords: List[str], company_url: str, enable_
     return results
 
 
-@modal_app.function(image=image, timeout=300, memory=1024, min_containers=0)
+@modal_app.function(image=image, timeout=86400, memory=1024, min_containers=0)
 @modal.asgi_app()
 def fastapi_app():
     return app

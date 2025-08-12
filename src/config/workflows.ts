@@ -78,7 +78,8 @@ Mike Chen,mike@startupxyz.com,StartupXYZ,startupxyz.com`
     // Temporary per-mode endpoint override until backend is unified
     modes: [
       { id: 'freestyle', label: 'Freestyle' },
-      { id: 'keyword-kombat', label: 'Keyword Kombat' }
+      { id: 'keyword-kombat', label: 'Keyword Kombat' },
+      { id: 'vc-analyst', label: 'VC Analyst' }
     ],
     defaultModeId: 'freestyle',
     

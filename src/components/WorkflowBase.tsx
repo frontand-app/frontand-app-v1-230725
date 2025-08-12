@@ -155,6 +155,13 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
   const authRequired = !testMode && !user; // sign-in gating (no inline error)
   const inputBadgeClass = highlightOutput ? 'bg-muted text-muted-foreground' : 'bg-primary text-primary-foreground';
   const outputBadgeClass = highlightOutput ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground';
+  // VC Analyst configurable fund rules (EDP-specific defaults, user-editable)
+  const [vcStages, setVcStages] = useState<string>('Pre-seed, Seed, Series A');
+  const [vcVintageMonths, setVcVintageMonths] = useState<string>('24');
+  const [vcTrlMin, setVcTrlMin] = useState<string>('5');
+  const [vcSectors, setVcSectors] = useState<string>('ClimateTech, EnergyTech, AI/ML applied to Energy');
+  const [vcGeos, setVcGeos] = useState<string>('North America, Europe');
+  const [vcFundName, setVcFundName] = useState<string>('EDP');
 
   const handleMockModeToggle = (isMockMode: boolean) => {
     setTestMode(isMockMode);
@@ -204,6 +211,80 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
     } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inputValues.csv_data, mode]);
+
+  // Build VC Analyst prompt from variables
+  const buildVcAnalystPrompt = (): string => {
+    const stages = vcStages;
+    const vintage = vcVintageMonths;
+    const trl = vcTrlMin;
+    const sectors = vcSectors;
+    const geos = vcGeos;
+    const fund = vcFundName;
+    return `You are an intelligent assistant for venture-capital and strategic-investment workflows at ${fund}.
+
+Responsibilities:
+1. Convert free-form theses into structured YAML profiles.
+2. Interpret startup profiles, compute objective & relevance scores.
+3. Classify startups on strategic fit.
+4. Produce memos / markdown summaries aligned to fund strategy.
+Respond only with structured outputs unless asked otherwise.
+
+# UNIVERSAL INVESTMENT INTELLIGENCE SYSTEM (UIIS)
+
+TASK
+
+1 — Fit Check\nEvaluate the startup in INPUT against the five rules below. Record any rule that fails inside an array called exclusion_reasons.
+
+Rules: [
+  { id: "F1", filter: "Stage", pass: "${stages}" },
+  { id: "F2", filter: "Launch vintage", pass: "Founded ≤ ${vintage} months ago" },
+  { id: "F3", filter: "TRL", pass: "≥ ${trl}" },
+  { id: "F4", filter: "Sector", pass: "${sectors}" },
+  { id: "F5", filter: "Geography (HQ)", pass: "${geos}" }
+]
+If exclusion_reasons is not empty → classify the deal as Out of Scope and skip Step 2.
+
+2 — Scoring & Classification (only when exclusion_reasons is empty)
+Objective score (0-8) with caps: revenue_or_paying_pilot(3), strategic_partner(3 cap with revenue), industrial_vc(1), subsector_match(1), geography_match(1), ip(1), stage_match(1), impact_aligned(1).
+
+Relevance score (0-100%):
+relevance = 0.35*subsector_match + 0.20*stage_match + 0.15*geography_match + 0.10*ip_presence + 0.10*impact_alignment + 0.10*founder_match.
+
+Classification:
+High Priority: objective_score ≥ 6 and relevance_score ≥ 75.
+Medium Fit: objective_score ≥ 4 and relevance_score ≥ 50.
+Not Relevant: below Medium.
+Out of Scope: exclusion_reasons non-empty.
+
+3 — Plain-text Summary (no markdown). Format:
+Startup: <name>\nStage: <stage>\nSector: <sector → subsector → use_case>\nGeography: <hq_country>\nType: <labels>\nTraction: <list>\nIP: <status>\nFounder Profile: <signals>\nImpact-Aligned: <yes/no>\nObjective Score: <x>/8\nRelevance Score: <y>%\nClassification: <High Priority | Medium Fit | Not Relevant | Out of Scope>\nStrategic Fit: <1–2 sentence rationale>
+
+OUTPUT (JSON only; array with single element):
+[
+  {
+    "Companies": "{{ $json.Companies }}",
+    "startup_name": "{{ $json.Companies }}",
+    "stage": "<Pre-seed | Seed | Series A | Later>",
+    "sector_path": "<main → sub → use_case>",
+    "objective_score": 0,
+    "relevance_score": 0,
+    "classification": "High Priority | Medium Fit | Not Relevant | Out of Scope",
+    "summary_txt": "<plain text summary>",
+    "exclusion_reasons": []
+  }
+]
+`;
+  };
+
+  // Keep VC Analyst prompt in sync with variables
+  useEffect(() => {
+    if (config.id === 'loop-over-rows' && mode === 'vc-analyst') {
+      if (!inputValues.prompt || inputValues.prompt.includes('UNIVERSAL INVESTMENT INTELLIGENCE SYSTEM')) {
+        handleInputChange('prompt', buildVcAnalystPrompt());
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, vcStages, vcVintageMonths, vcTrlMin, vcSectors, vcGeos, vcFundName]);
 
   // Dynamic loading phrases based on workflow
   const getLoadingPhrases = () => {
@@ -1016,7 +1097,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                     <h3 className="font-medium text-foreground mb-4">
                       {config.id === 'loop-over-rows' && mode === 'keyword-kombat'
                         ? (step >= 2 ? 'Upload your CSV file with the keywords you would like to rank*' : 'Upload a file or paste a list with the keywords you would like to rank*')
-                        : 'Upload CSV data'}
+                        : (mode === 'vc-analyst' ? 'Upload your CSV with startup rows (include headers)' : 'Upload CSV data')}
                     </h3>
                     
                       {config.id === 'loop-over-rows' && mode === 'keyword-kombat' ? (
@@ -1066,7 +1147,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                         <div>
                           <label className="text-sm font-medium text-foreground mb-2 block">Task (Prompt)</label>
                           <Textarea
-                            placeholder="Describe the task for each row..."
+                            placeholder={mode === 'vc-analyst' ? 'VC Analyst prompt will be generated from the fund rules below...' : 'Describe the task for each row...'}
                             value={inputValues.prompt || ''}
                             onChange={(e) => handleInputChange('prompt', e.target.value)}
                             className="min-h-[140px] resize-none"
@@ -1086,7 +1167,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                     )}
                 </div>
 
-                  {/* Additional inputs for specific modes */}
+                   {/* Additional inputs for specific modes */}
                         <div className="mt-6 pt-4 border-t border-border">
                     <div className="space-y-4">
                       {config.id === 'loop-over-rows' && mode === 'keyword-kombat' && uploadedFile && (
@@ -1114,6 +1195,38 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                           onChange={(e) => handleInputChange('company_url', e.target.value)}
                       />
                     </div>) }
+
+                    {config.id === 'loop-over-rows' && mode === 'vc-analyst' && (
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-sm text-foreground mb-1 block">Fund name</label>
+                            <Input value={vcFundName} onChange={(e) => setVcFundName(e.target.value)} />
+                          </div>
+                          <div>
+                            <label className="text-sm text-foreground mb-1 block">Stage allowlist</label>
+                            <Input value={vcStages} onChange={(e) => setVcStages(e.target.value)} placeholder="Pre-seed, Seed, Series A" />
+                          </div>
+                          <div>
+                            <label className="text-sm text-foreground mb-1 block">Launch vintage ≤ (months)</label>
+                            <Input value={vcVintageMonths} onChange={(e) => setVcVintageMonths(e.target.value)} />
+                          </div>
+                          <div>
+                            <label className="text-sm text-foreground mb-1 block">Min TRL</label>
+                            <Input value={vcTrlMin} onChange={(e) => setVcTrlMin(e.target.value)} />
+                          </div>
+                          <div className="md:col-span-2">
+                            <label className="text-sm text-foreground mb-1 block">Sectors</label>
+                            <Input value={vcSectors} onChange={(e) => setVcSectors(e.target.value)} />
+                          </div>
+                          <div className="md:col-span-2">
+                            <label className="text-sm text-foreground mb-1 block">Geographies (HQ)</label>
+                            <Input value={vcGeos} onChange={(e) => setVcGeos(e.target.value)} />
+                          </div>
+                        </div>
+                        <div className="text-xs text-muted-foreground">The prompt above updates automatically from these fund rules.</div>
+                      </div>
+                    )}
                     </div>
                 </div>
 

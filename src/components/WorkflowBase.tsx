@@ -889,17 +889,20 @@ OUTPUT (JSON only; array with single element):
         const normalizedRows = tableData.map((row: Record<string, any>) => {
           const out: Record<string, any> = {};
           Object.entries(row).forEach(([k, v]) => {
-            if (k === 'output') {
-              const flattened = flattenOnce(v);
-              if (flattened && typeof flattened === 'object' && !Array.isArray(flattened)) {
-                Object.entries(flattened).forEach(([innerK, innerV]) => {
-                  out[innerK] = innerV;
-                });
-              } else {
-                out[k] = flattened;
-              }
+            const shouldFlatten = (
+              k === 'output' ||
+              (config.id === 'loop-over-rows' && k !== 'row_key')
+            );
+            const candidate = shouldFlatten ? flattenOnce(v) : v;
+            if (
+              shouldFlatten &&
+              candidate && typeof candidate === 'object' && !Array.isArray(candidate)
+            ) {
+              Object.entries(candidate).forEach(([innerK, innerV]) => {
+                out[innerK] = innerV;
+              });
             } else {
-              out[k] = v;
+              out[k] = candidate;
             }
           });
           return out;

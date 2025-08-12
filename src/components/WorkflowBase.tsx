@@ -865,17 +865,62 @@ OUTPUT (JSON only; array with single element):
           );
         }
 
-        // Transform API response into TableOutput format
+        // Flatten helper: turn output arrays/objects into top-level columns
+        const tryParseJson = (val: any) => {
+          if (typeof val !== 'string') return val;
+          const s = val.trim();
+          if (!s.startsWith('{') && !s.startsWith('[')) return val;
+          try { return JSON.parse(s); } catch { return val; }
+        };
+        const flattenOnce = (value: any) => {
+          const parsed = tryParseJson(value);
+          if (Array.isArray(parsed)) {
+            if (parsed.length === 1 && typeof parsed[0] === 'object' && parsed[0] !== null) {
+              return parsed[0];
+            }
+            return parsed; // keep non-singleton arrays as-is
+          }
+          return parsed;
+        };
+        const toTitle = (k: string) => k === results.output_column_name
+          ? results.output_column_name.replace(/_/g, ' ')
+          : (k.charAt(0).toUpperCase() + k.slice(1).replace(/_/g, ' '));
+
+        const normalizedRows = tableData.map((row: Record<string, any>) => {
+          const out: Record<string, any> = {};
+          Object.entries(row).forEach(([k, v]) => {
+            if (k === 'output') {
+              const flattened = flattenOnce(v);
+              if (flattened && typeof flattened === 'object' && !Array.isArray(flattened)) {
+                Object.entries(flattened).forEach(([innerK, innerV]) => {
+                  out[innerK] = innerV;
+                });
+              } else {
+                out[k] = flattened;
+              }
+            } else {
+              out[k] = v;
+            }
+          });
+          return out;
+        });
+
+        // Build columns from union of keys
+        const allKeys = Array.from(
+          normalizedRows.reduce<Set<string>>((set, r) => {
+            Object.keys(r || {}).forEach((k) => set.add(k));
+            return set;
+          }, new Set())
+        );
+
         const tableOutputData = {
-          columns: Object.keys(tableData[0] || {}).map(key => ({
+          columns: allKeys.map((key) => ({
             key,
-            label: key === results.output_column_name 
-              ? results.output_column_name.replace(/_/g, ' ')
-              : key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' '),
+            label: toTitle(key),
             type: 'text' as const,
             sortable: true
           })),
-          rows: tableData
+          rows: normalizedRows
         };
 
         // Calculate confidence score (mock for now - in real app this would come from AI)

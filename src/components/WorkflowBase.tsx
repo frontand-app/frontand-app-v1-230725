@@ -979,11 +979,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                           }}
                         />
 
-                        {inputValues.csv_data && (
-                          <MockPreview filename={uploadedFile?.name || 'sample.csv'}>
-                            <pre className="overflow-auto whitespace-pre-wrap">{inputValues.csv_data}</pre>
-                          </MockPreview>
-                        )}
+                        {/* Inline preview/edit is handled inside CsvPlaintextInput; no separate preview here */}
 
                         {csvHeaders.length > 0 && (
                           <ColumnSelectorChips

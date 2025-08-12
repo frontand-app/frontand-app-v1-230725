@@ -54,6 +54,34 @@ const CsvPlaintextInput: React.FC<CsvPlaintextInputProps> = ({
       .filter((l) => l.length > 0).length;
   }, [value]);
 
+  const csvPreview = useMemo(() => {
+    if (!value) return null;
+    const lines = value.split('\n').filter(Boolean);
+    if (lines.length === 0) return null;
+    // naive CSV parse with quote handling for preview only
+    const parseLine = (line: string) => {
+      const result: string[] = [];
+      let current = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') {
+          inQuotes = !inQuotes;
+        } else if (ch === ',' && !inQuotes) {
+          result.push(current.trim().replace(/^\"|\"$/g, ''));
+          current = '';
+        } else {
+          current += ch;
+        }
+      }
+      result.push(current.trim().replace(/^\"|\"$/g, ''));
+      return result;
+    };
+    const header = parseLine(lines[0]);
+    const rows = lines.slice(1, 6).map(parseLine); // first 5 rows for preview
+    return { header, rows };
+  }, [value]);
+
   return (
     <div className="space-y-3">
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'text' | 'file')}>
@@ -67,11 +95,34 @@ const CsvPlaintextInput: React.FC<CsvPlaintextInputProps> = ({
             <div
               role="button"
               onClick={() => setIsEditing(true)}
-              className="min-h-[96px] border rounded-md p-3 bg-background text-foreground font-mono text-sm whitespace-pre-wrap cursor-text"
+              className="min-h-[96px] border rounded-md p-0 bg-background text-foreground cursor-text"
               title="Click to edit"
             >
-              {value}
-              <div className="mt-1 text-xs text-muted-foreground">
+              {csvPreview ? (
+                <div className="max-h-64 overflow-auto">
+                  <table className="w-full text-xs">
+                    <thead className="bg-secondary sticky top-0">
+                      <tr>
+                        {csvPreview.header.map((h, i) => (
+                          <th key={i} className="text-left px-3 py-2 font-medium whitespace-pre-wrap break-words">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {csvPreview.rows.map((r, idx) => (
+                        <tr key={idx} className="odd:bg-background even:bg-secondary/40">
+                          {csvPreview.header.map((_, i) => (
+                            <td key={i} className="px-3 py-2 whitespace-pre-wrap break-words align-top">{r[i] ?? ''}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="p-3 font-mono text-sm whitespace-pre-wrap leading-5 max-h-64 overflow-auto">{value}</div>
+              )}
+              <div className="px-3 pb-2 pt-1 text-xs text-muted-foreground">
                 <FileText className="inline w-3 h-3 mr-1" />
                 {linesDetected} {linesDetected === 1 ? 'line' : 'lines'} detected · Click to edit
               </div>
@@ -83,7 +134,7 @@ const CsvPlaintextInput: React.FC<CsvPlaintextInputProps> = ({
                 placeholder={placeholder || 'Paste CSV with headers in first row...'}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                className="min-h-[96px] resize-none font-mono text-sm"
+                className="min-h-[96px] resize-none font-mono text-sm leading-5"
                 onBlur={() => setIsEditing(false)}
               />
               <div className="mt-1 text-xs text-muted-foreground">
@@ -103,11 +154,34 @@ const CsvPlaintextInput: React.FC<CsvPlaintextInputProps> = ({
             <div
               role="button"
               onClick={() => setIsEditing(true)}
-              className="min-h-[96px] border rounded-md p-3 bg-background text-foreground font-mono text-sm whitespace-pre-wrap cursor-text"
+              className="min-h-[96px] border rounded-md p-0 bg-background text-foreground cursor-text"
               title="Click to edit or replace"
             >
-              {value}
-              <div className="mt-1 text-xs text-muted-foreground">
+              {csvPreview ? (
+                <div className="max-h-64 overflow-auto">
+                  <table className="w-full text-xs">
+                    <thead className="bg-secondary sticky top-0">
+                      <tr>
+                        {csvPreview.header.map((h, i) => (
+                          <th key={i} className="text-left px-3 py-2 font-medium whitespace-pre-wrap break-words">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {csvPreview.rows.map((r, idx) => (
+                        <tr key={idx} className="odd:bg-background even:bg-secondary/40">
+                          {csvPreview.header.map((_, i) => (
+                            <td key={i} className="px-3 py-2 whitespace-pre-wrap break-words align-top">{r[i] ?? ''}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="p-3 font-mono text-sm whitespace-pre-wrap leading-5 max-h-64 overflow-auto">{value}</div>
+              )}
+              <div className="px-3 pb-2 pt-1 text-xs text-muted-foreground">
                 <FileText className="inline w-3 h-3 mr-1" />
                 {linesDetected} {linesDetected === 1 ? 'line' : 'lines'} detected · Click to edit or replace
               </div>

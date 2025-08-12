@@ -554,13 +554,18 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
       // Endpoint: allow per-mode override while we unify backend
       // Single unified endpoint handles all modes
       const endpointToUse = config.endpoint;
+      // Long-running fetch with AbortController safety but generous timeout (22h)
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), 22 * 60 * 60 * 1000);
       const response = await fetch(endpointToUse, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestData)
+        body: JSON.stringify(requestData),
+        signal: controller.signal,
       });
+      window.clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorText = await response.text();

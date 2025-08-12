@@ -41,7 +41,7 @@ const Layout = ({ children }: LayoutProps) => {
   // Always show layout, including on /auth (so the page has header/footer)
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 border-b bg-background/95 backdrop-blur-sm">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">

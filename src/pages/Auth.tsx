@@ -6,7 +6,7 @@ const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
       <div className="w-full max-w-md mx-auto">
         {isLogin ? <LoginForm /> : <SignUpForm />}
         

@@ -24,6 +24,7 @@ const CsvPlaintextInput: React.FC<CsvPlaintextInputProps> = ({
   onFilePicked,
   onClearFile,
   onRequestFileDialog,
+  forceSingleHeader,
 }) => {
   const initialTab = uploadedFileName ? 'file' : 'text';
   const [activeTab, setActiveTab] = useState<'text' | 'file'>(initialTab as 'text' | 'file');

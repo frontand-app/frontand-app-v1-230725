@@ -546,8 +546,8 @@ OUTPUT (JSON only; array with single element):
         mode: config.id === 'loop-over-rows' ? mode : undefined
       };
 
-      // Special handling for loop-over-rows freestyle (CSV + prompt)
-      if (config.id === 'loop-over-rows' && mode === 'freestyle' && inputValues.csv_data && inputValues.prompt) {
+      // Special handling for loop-over-rows freestyle-like modes (CSV + prompt)
+      if (config.id === 'loop-over-rows' && (mode === 'freestyle' || mode === 'vc-analyst') && inputValues.csv_data && inputValues.prompt) {
         const parsedData = parseCSVData(inputValues.csv_data);
         if (!parsedData) {
           throw new Error('Invalid CSV data format');
@@ -575,7 +575,7 @@ OUTPUT (JSON only; array with single element):
           output_schema: inputValues.output_schema,
           batch_size: 10,
           enable_google_search: enableGoogleSearch,
-          mode: 'freestyle',
+          mode: mode,
           ...(inputValues.webhook_url ? { config: { webhook_url: inputValues.webhook_url } } : {})
         };
       } else if (config.id === 'loop-over-rows' && mode === 'keyword-kombat' && inputValues.keywords && inputValues.company_url) {

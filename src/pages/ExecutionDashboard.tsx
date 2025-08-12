@@ -43,6 +43,51 @@ const ExecutionDashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
 
+  const escapeCsv = (value: any) => {
+    const s = value === null || value === undefined ? '' : String(value);
+    if (s.includes(',') || s.includes('\n') || s.includes('"')) {
+      return '"' + s.replace(/"/g, '""') + '"';
+    }
+    return s;
+  };
+
+  const downloadExecutionsCSV = () => {
+    const headers = [
+      'id',
+      'workflow_id',
+      'workflow_name',
+      'status',
+      'created_at',
+      'completed_at',
+      'duration_seconds',
+      'cost_credits',
+      'progress',
+      'files_count'
+    ];
+    const lines = filteredExecutions.map((e) => [
+      e.id,
+      e.workflowId,
+      e.workflowName,
+      e.status,
+      e.createdAt,
+      e.completedAt || '',
+      e.actualTime ?? '',
+      typeof e.costCredits === 'number' ? e.costCredits.toFixed(2) : '',
+      e.progress ?? '',
+      e.files?.length ?? 0
+    ].map(escapeCsv).join(','));
+    const csv = [headers.join(','), ...lines].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `executions_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   // Load executions and subscribe to changes/poll
   useEffect(() => {
     let isMounted = true;
@@ -155,7 +200,7 @@ const ExecutionDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Search and Filter */}
+      {/* Search, Filter, Export */}
       <div className="flex items-center gap-3 mb-6">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -179,6 +224,16 @@ const ExecutionDashboard: React.FC = () => {
           <option value="failed">Failed</option>
           <option value="cancelled">Cancelled</option>
         </select>
+
+        <Button
+          variant="outline"
+          className="ml-auto flex items-center gap-2"
+          onClick={downloadExecutionsCSV}
+          disabled={filteredExecutions.length === 0}
+          title="Download CSV"
+        >
+          <Download className="h-4 w-4" /> CSV
+        </Button>
       </div>
 
       {/* Executions Table */}

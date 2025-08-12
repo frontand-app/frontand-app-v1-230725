@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +11,10 @@ export const SignUpForm = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const { signUp } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const redirect = params.get('redirect') || '/';
 
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -41,6 +46,7 @@ export const SignUpForm = () => {
           try {
             setError(null);
             await signUp(email, password);
+            navigate(redirect, { replace: true });
           } catch (e: any) {
             setError(e.message || 'Sign-up failed');
           }

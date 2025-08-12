@@ -37,7 +37,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 // Workflow Configuration Types
 export interface WorkflowField {
@@ -121,6 +121,7 @@ interface WorkflowBaseProps {
 }
 
 const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
+  const location = useLocation();
   // Mode state (for apps that support modes, e.g., loop-over-rows)
   const urlParams = new URLSearchParams(window.location.search);
   const initialMode = (urlParams.get('mode') || (config as any).defaultModeId || 'freestyle');
@@ -1001,7 +1002,7 @@ const WorkflowBase: React.FC<WorkflowBaseProps> = ({ config }) => {
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>
                       <span className="font-medium">Sign in required.</span> You need to sign in to run the full workflow. You can switch on Mock mode to try a short preview.
-                      <span className="ml-2 underline"><Link to="/auth">Go to sign in</Link></span>
+                      <span className="ml-2 underline"><Link to={`/auth?redirect=${encodeURIComponent(location.pathname + location.search)}`}>Go to sign in</Link></span>
                     </AlertDescription>
                   </Alert>
                 )}

@@ -81,15 +81,21 @@ const CsvPlaintextInput: React.FC<CsvPlaintextInputProps> = ({
     };
     let header: string[];
     let rows: string[][];
+    let totalRows = 0;
     const rowsToShow = 20;
-    if (forceSingleHeader) {
-      header = [forceSingleHeader];
-      rows = lines.slice(0, rowsToShow).map(l => [l.trim()]);
+    const firstLine = lines[0] ?? '';
+    const shouldForceSingle = Boolean(forceSingleHeader && !firstLine.includes(',') && firstLine.trim().toLowerCase() !== forceSingleHeader.trim().toLowerCase() && lines.every(l => !l.includes(',')));
+
+    if (shouldForceSingle) {
+      header = [forceSingleHeader as string];
+      totalRows = lines.length;
+      rows = lines.slice(0, rowsToShow).map((l) => [l.trim()]);
     } else {
-      header = parseLine(lines[0]);
-      rows = lines.slice(1, 1 + rowsToShow).map(parseLine); // first N rows for preview
+      header = parseLine(firstLine);
+      totalRows = Math.max(lines.length - 1, 0);
+      rows = lines.slice(1).slice(0, rowsToShow).map(parseLine); // first N rows for preview
     }
-    return { header, rows };
+    return { header, rows, totalRows };
   }, [value, forceSingleHeader]);
 
   const shorten = (text: string, max = 200) => {
@@ -139,7 +145,7 @@ const CsvPlaintextInput: React.FC<CsvPlaintextInputProps> = ({
               )}
               <div className="px-3 pb-2 pt-1 text-xs text-muted-foreground">
                 <FileText className="inline w-3 h-3 mr-1" />
-                {Math.max(linesDetected - 1, 0)} rows total · Previewing first {csvPreview ? csvPreview.rows.length : 0} · Click to edit
+                {csvPreview ? `${csvPreview.totalRows} rows total · Previewing first ${Math.min(csvPreview.totalRows, csvPreview.rows.length)}` : ''} · Click to edit
               </div>
             </div>
           ) : (
@@ -198,7 +204,7 @@ const CsvPlaintextInput: React.FC<CsvPlaintextInputProps> = ({
               )}
               <div className="px-3 pb-2 pt-1 text-xs text-muted-foreground">
                 <FileText className="inline w-3 h-3 mr-1" />
-                {Math.max(linesDetected - 1, 0)} rows total · Previewing first {csvPreview ? csvPreview.rows.length : 0} · Click to edit or replace
+                {csvPreview ? `${csvPreview.totalRows} rows total · Previewing first ${Math.min(csvPreview.totalRows, csvPreview.rows.length)}` : ''} · Click to edit or replace
               </div>
             </div>
           ) : (

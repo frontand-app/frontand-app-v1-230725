@@ -54,16 +54,27 @@ export const TableOutput: React.FC<TableOutputProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
 
+  const toDisplayString = (value: any, pretty: boolean = false): string => {
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'object') {
+      try {
+        return JSON.stringify(value, pretty ? null : undefined, pretty ? 2 : undefined);
+      } catch {
+        return String(value);
+      }
+    }
+    return String(value);
+  };
+
   // Sort and filter data
   const processedData = useMemo(() => {
     let filtered = data.rows;
 
     // Apply search filter
     if (searchTerm) {
+      const term = searchTerm.toLowerCase();
       filtered = filtered.filter(row =>
-      Object.values(row).some(value =>
-          String(value).toLowerCase().includes(searchTerm.toLowerCase())
-        )
+        Object.values(row).some(value => toDisplayString(value).toLowerCase().includes(term))
       );
     }
 
@@ -76,12 +87,11 @@ export const TableOutput: React.FC<TableOutputProps> = ({
       if (typeof aVal === 'number' && typeof bVal === 'number') {
         return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
       }
-      
-        const aStr = String(aVal).toLowerCase();
-        const bStr = String(bVal).toLowerCase();
-        return sortDirection === 'asc' 
-          ? aStr.localeCompare(bStr)
-          : bStr.localeCompare(aStr);
+      const aStr = toDisplayString(aVal).toLowerCase();
+      const bStr = toDisplayString(bVal).toLowerCase();
+      return sortDirection === 'asc' 
+        ? aStr.localeCompare(bStr)
+        : bStr.localeCompare(aStr);
       });
     }
 
@@ -125,8 +135,8 @@ export const TableOutput: React.FC<TableOutputProps> = ({
     const rows = processedData.map(row => 
       data.columns.map(col => {
         const value = row[col.key];
+        const stringValue = toDisplayString(value);
         // Escape quotes and wrap in quotes if contains comma/quote
-        const stringValue = String(value || '');
         return stringValue.includes(',') || stringValue.includes('"') 
           ? `"${stringValue.replace(/"/g, '""')}"` 
           : stringValue;
@@ -259,10 +269,16 @@ export const TableOutput: React.FC<TableOutputProps> = ({
                                 {String(value || '')}
                               </p>
                             </div>
-                          ) : (
-                            <span className={column.type === 'number' ? 'font-medium' : ''}>
-                              {String(value || '')}
-                        </span>
+                      ) : (
+                        typeof value === 'object' && value !== null ? (
+                          <pre className="text-xs whitespace-pre-wrap break-all max-h-40 overflow-auto p-2 bg-gray-50 rounded">
+                            {toDisplayString(value, true)}
+                          </pre>
+                        ) : (
+                          <span className={column.type === 'number' ? 'font-medium' : ''}>
+                            {toDisplayString(value)}
+                          </span>
+                        )
                       )}
                         </td>
                       );

@@ -10,6 +10,7 @@ import {
   Search,
   Eye
 } from 'lucide-react';
+import { normalizeResult } from '@/lib/normalizers';
 
 interface ExecutionFile {
   id: string;
@@ -86,6 +87,29 @@ const ExecutionDashboard: React.FC = () => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  };
+
+  const downloadResultCSV = (execution: WorkflowExecution) => {
+    try {
+      const normalized = normalizeResult(execution.workflowId, execution.results);
+      const rows = normalized.rows;
+      if (!rows || rows.length === 0) return;
+      const headers = normalized.columns;
+      const escape = (v: any) => {
+        const s = v === null || v === undefined ? '' : String(v);
+        return s.includes(',') || s.includes('\n') || s.includes('"') ? '"' + s.replace(/"/g, '""') + '"' : s;
+      };
+      const csv = [headers.join(','), ...rows.map(r => headers.map(h => escape(r[h])).join(','))].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${execution.workflowName.replace(/\s+/g,'_').toLowerCase()}_${execution.id}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {}
   };
 
   // Load executions and subscribe to changes/poll
@@ -225,12 +249,13 @@ const ExecutionDashboard: React.FC = () => {
           <option value="cancelled">Cancelled</option>
         </select>
 
+        {/* Keep global CSV export but not floating far; align within controls */}
         <Button
           variant="outline"
           className="ml-auto flex items-center gap-2"
           onClick={downloadExecutionsCSV}
           disabled={filteredExecutions.length === 0}
-          title="Download CSV"
+          title="Download CSV (all filtered)"
         >
           <Download className="h-4 w-4" /> CSV
         </Button>
@@ -332,28 +357,35 @@ const ExecutionDashboard: React.FC = () => {
                       <div className="text-xs text-gray-500">credits</div>
                     </td>
                     <td className="py-4 px-4">
-                      {execution.files && execution.files.length > 0 ? (
-                        <div className="flex gap-1">
-                          {execution.files.slice(0, 2).map((file) => (
-                            <button
-                              key={file.id}
-                              className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded text-gray-700 transition-colors"
-                              onClick={() => window.open(file.downloadUrl, '_blank')}
-                              title={`${file.name} (${formatFileSize(file.size)})`}
-                            >
-                              <Download className="h-3 w-3" />
-                              {file.type.toUpperCase()}
-                            </button>
-                          ))}
-                          {execution.files.length > 2 && (
-                            <div className="text-xs text-gray-500 self-center px-1">
-                              +{execution.files.length - 2}
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="text-sm text-gray-400">-</div>
-                      )}
+                      <div className="flex gap-1">
+                        {/* Per-execution CSV derived from results */}
+                        {execution.status === 'completed' && execution.results && (
+                          <button
+                            className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded text-gray-700 transition-colors"
+                            onClick={() => downloadResultCSV(execution)}
+                            title="Download CSV"
+                          >
+                            <Download className="h-3 w-3" /> CSV
+                          </button>
+                        )}
+                        {/* Backend-provided files (e.g., JSON) */}
+                        {execution.files && execution.files.length > 0 && execution.files.slice(0, 2).map((file) => (
+                          <button
+                            key={file.id}
+                            className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded text-gray-700 transition-colors"
+                            onClick={() => window.open(file.downloadUrl, '_blank')}
+                            title={`${file.name} (${formatFileSize(file.size)})`}
+                          >
+                            <Download className="h-3 w-3" />
+                            {file.type.toUpperCase()}
+                          </button>
+                        ))}
+                        {execution.files && execution.files.length > 2 && (
+                          <div className="text-xs text-gray-500 self-center px-1">
+                            +{execution.files.length - 2}
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td className="py-4 px-4">
                       <div className="flex gap-1">

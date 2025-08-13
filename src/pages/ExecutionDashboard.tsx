@@ -11,6 +11,7 @@ import {
   Eye
 } from 'lucide-react';
 import { normalizeResult } from '@/lib/normalizers';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface ExecutionFile {
   id: string;
@@ -249,16 +250,7 @@ const ExecutionDashboard: React.FC = () => {
           <option value="cancelled">Cancelled</option>
         </select>
 
-        {/* Keep global CSV export but not floating far; align within controls */}
-        <Button
-          variant="outline"
-          className="ml-auto flex items-center gap-2"
-          onClick={downloadExecutionsCSV}
-          disabled={filteredExecutions.length === 0}
-          title="Download CSV (all filtered)"
-        >
-          <Download className="h-4 w-4" /> CSV
-        </Button>
+        {/* Remove top-right floating CSV; keep inline export for filtered list if desired */}
       </div>
 
       {/* Executions Table */}
@@ -398,7 +390,6 @@ const ExecutionDashboard: React.FC = () => {
                             <Pause className="h-4 w-4" />
                           </button>
                         )}
-                        
                         {execution.status === 'failed' && (
                           <button
                             className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
@@ -408,13 +399,24 @@ const ExecutionDashboard: React.FC = () => {
                             <RotateCcw className="h-4 w-4" />
                           </button>
                         )}
-                        
-                        <button 
-                          className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
-                          title="View details"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </button>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <button 
+                              className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                              title="View details"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-3xl">
+                            <DialogHeader>
+                              <DialogTitle>Execution {execution.id}</DialogTitle>
+                            </DialogHeader>
+                            <div className="text-xs overflow-auto max-h-[70vh] p-2 bg-gray-50 rounded">
+                              <pre>{JSON.stringify(execution.results ?? execution, null, 2)}</pre>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
                       </div>
                     </td>
                   </tr>

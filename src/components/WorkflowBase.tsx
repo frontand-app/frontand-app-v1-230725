@@ -21,6 +21,7 @@ import GoogleSearchToggle from '@/components/shared/GoogleSearchToggle';
 import ColumnSelectorChips from '@/components/shared/ColumnSelectorChips';
 import { useAuth } from '@/hooks/useAuth';
 import { createExecution, updateExecution, buildFilesForResults } from '@/lib/executionApi';
+import { buildLoopOverRowsPayload } from '@/lib/modes';
 import * as LucideIcons from 'lucide-react';
 import { TableOutput, TableData } from '@/components/TableOutput';
 import { normalizeResult } from '@/lib/normalizers';
@@ -547,55 +548,26 @@ OUTPUT (JSON only; array with single element):
         mode: config.id === 'loop-over-rows' ? mode : undefined
       };
 
-      // Special handling for loop-over-rows freestyle-like modes (CSV + prompt)
-      if (config.id === 'loop-over-rows' && (mode === 'freestyle' || mode === 'vc-analyst') && inputValues.csv_data && inputValues.prompt) {
-        const parsedData = parseCSVData(inputValues.csv_data);
-        if (!parsedData) {
-          throw new Error('Invalid CSV data format');
+      // Use shared mode adapter for loop-over-rows
+      if (config.id === 'loop-over-rows') {
+        if (mode === 'freestyle' || mode === 'vc-analyst') {
+          const parsedData = parseCSVData(inputValues.csv_data);
+          if (!parsedData) throw new Error('Invalid CSV data format');
+          requestData = buildLoopOverRowsPayload(mode as any, inputValues, {
+            testMode,
+            enableGoogleSearch,
+            webhookUrl: inputValues.webhook_url,
+            batchSize: 10,
+            selectedColumns: selectedCsvColumns,
+            parsedCsv: parsedData,
+          });
+        } else if (mode === 'keyword-kombat') {
+          requestData = buildLoopOverRowsPayload('keyword-kombat', inputValues, {
+            testMode,
+            enableGoogleSearch,
+            webhookUrl: inputValues.webhook_url,
+          });
         }
-
-        // Filter columns based on user selection (default is all)
-        const activeHeaders = selectedCsvColumns.length > 0 ? selectedCsvColumns : parsedData.headers;
-        const headerIndices = activeHeaders.map(h => parsedData.headers.indexOf(h)).filter(i => i >= 0);
-
-        // Format data for Modal API - convert CSV to row-keyed array format
-        const rowsToProcess = testMode ? parsedData.rows.slice(0, 2) : parsedData.rows;
-        
-        // Convert rows to row-keyed array format as expected by Modal
-        const dataDict: Record<string, string[]> = {};
-        rowsToProcess.forEach((row, index) => {
-          const rowKey = `row_${index + 1}`;
-          const filteredRow = headerIndices.map(i => row[i]);
-          dataDict[rowKey] = filteredRow;
-        });
-        
-        requestData = {
-          data: dataDict,
-          headers: activeHeaders,
-          prompt: inputValues.prompt.trim(),
-          output_schema: inputValues.output_schema,
-          batch_size: 10,
-          enable_google_search: enableGoogleSearch,
-          mode: mode,
-          ...(inputValues.webhook_url ? { config: { webhook_url: inputValues.webhook_url } } : {})
-        };
-      } else if (config.id === 'loop-over-rows' && mode === 'keyword-kombat' && inputValues.keywords && inputValues.company_url) {
-        // Keyword Kombat mode
-        const lines = inputValues.keywords.trim().split('\n').filter((l: string) => l.trim().length > 0);
-        const dataDict: Record<string, string[]> = {};
-        const headers = ['Keyword'];
-        (testMode ? lines.slice(0, 3) : lines).forEach((kw: string, index: number) => {
-          dataDict[`row_${index + 1}`] = [kw.trim()];
-        });
-        requestData = {
-          mode: 'keyword-kombat',
-          keywords: lines,
-          company_url: inputValues.company_url,
-          keyword_variable: inputValues.keyword_variable || 'keyword',
-          test_mode: testMode,
-          enable_google_search: enableGoogleSearch,
-          ...(inputValues.webhook_url ? { config: { webhook_url: inputValues.webhook_url } } : {})
-        };
       } else if (config.id === 'crawl4imprint' && inputValues.websites) {
         // Special handling for crawl4imprint workflow
         let websitesList: string[] = [];

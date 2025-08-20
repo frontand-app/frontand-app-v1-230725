@@ -8,7 +8,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "./scripts/deploy.sh",
+    "deploy:check": "git remote -v && gh auth status && echo 'Ready to deploy!'"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

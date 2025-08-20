@@ -159,7 +159,7 @@ Mike Chen,mike@startupxyz.com,StartupXYZ,startupxyz.com`
     description: 'Extract and download company logos from websites automatically',
     icon: Image,
     color: 'purple',
-    status: 'active', // Deployed to techrocketlist workspace with FastAPI app
+    status: 'live', // Deployed to frontand-app workspace with FastAPI app
     category: 'Data Enrichment',
     
     inputs: [
@@ -227,7 +227,7 @@ Mike Chen,mike@startupxyz.com,StartupXYZ,startupxyz.com`
     description: 'Extract contact information and team members from company websites',
     icon: Users,
     color: 'green',
-    status: 'active', // Deployed to techrocketlist workspace with FastAPI wrapper
+    status: 'live', // Deployed to frontand-app workspace with FastAPI wrapper
     category: 'Sales & Marketing',
     
     inputs: [
@@ -559,7 +559,7 @@ Mike Chen,mike@startupxyz.com,StartupXYZ,startupxyz.com`
     description: 'Extract business information from Google Maps searches by location and search terms',
     icon: Search,
     color: 'emerald',
-    status: 'active', // Deployed to techrocketlist workspace with FastAPI wrapper
+    status: 'live', // Deployed to frontand-app workspace with FastAPI wrapper
     category: 'Data Enrichment',
     
     inputs: [

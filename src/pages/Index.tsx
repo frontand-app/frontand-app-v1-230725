@@ -61,7 +61,7 @@ const Index = () => {
               className="border-2 border-foreground text-foreground hover:bg-foreground hover:text-background rounded-full px-8 py-6 text-sm font-medium"
               asChild
             >
-              <Link to="/flows/loop-over-rows">
+              <Link to="/search/loop-over-rows">
                 TRY FOR FREE
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
@@ -188,7 +188,7 @@ const Index = () => {
                       </div>
                       
                       {isLive ? (
-                        <Link to={`/flows/${workflow.id}`}>
+                        <Link to={`/search/${workflow.id}`}>
                           <Button 
                             className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-4 py-2 text-sm font-medium"
                             size="sm"
@@ -277,7 +277,7 @@ const Index = () => {
             className="bg-foreground hover:bg-foreground/90 text-background px-8 py-3"
               asChild
             >
-              <Link to="/flows/loop-over-rows">
+              <Link to="/search/loop-over-rows">
               <PlayCircle className="mr-2 w-4 h-4" />
               Start with Loop Over Rows
               <ArrowRight className="ml-2 w-4 h-4" />

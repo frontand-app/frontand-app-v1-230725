@@ -268,7 +268,7 @@ const ExecutionDashboard: React.FC = () => {
           </p>
           {!searchQuery && statusFilter === 'all' && (
             <Button className="bg-black hover:bg-gray-800 text-white" asChild>
-              <a href="/flows">
+                              <a href="/search">
                 <Play className="h-4 w-4 mr-2" />
                 Run Workflow
               </a>

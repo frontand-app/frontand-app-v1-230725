@@ -26,8 +26,8 @@ const Layout = ({ children }: LayoutProps) => {
   const navigation = [
   { name: "Home", href: "/" },
   { name: "Search", href: "/search" },
-  { name: "Loop Over Rows", href: "/flows/loop-over-rows" },
-  { name: "Crawl4Imprint", href: "/flows/crawl4imprint" },
+      { name: "Loop Over Rows", href: "/search/loop-over-rows" },
+    { name: "Crawl4Imprint", href: "/search/crawl4imprint" },
   { name: "Executions", href: "/executions" },
   { name: "Developer", href: "/developer" },
 ];

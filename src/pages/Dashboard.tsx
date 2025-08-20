@@ -300,7 +300,7 @@ const Dashboard = () => {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Button variant="outline" className="h-auto p-4 flex flex-col items-center space-y-2" asChild>
-              <Link to="/flows">
+                              <Link to="/search">
                 <Play className="w-6 h-6" />
                 <span>Run New Flow</span>
               </Link>

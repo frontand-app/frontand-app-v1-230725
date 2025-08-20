@@ -113,7 +113,7 @@ const PromptDiscovery = () => {
 
   const handleUseWorkflow = (workflow: SuggestedWorkflow) => {
     // Navigate to the workflow with pre-filled inputs
-    navigate(`/flows/${workflow.id}`, { 
+            navigate(`/search/${workflow.id}`, { 
       state: { 
         autoFilledInputs: workflow.autoFilledInputs,
         originalPrompt: prompt

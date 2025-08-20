@@ -25,7 +25,7 @@ const queryClient = new QueryClient();
 
 const WorkflowRedirect = () => {
   const { id } = useParams<{ id: string }>();
-  return <Navigate to={`/flows/${id}`} replace />;
+  return <Navigate to={`/search/${id}`} replace />;
 };
 
 // Universal workflow runner - handles all workflows via the registry
@@ -40,18 +40,20 @@ const App = () => (
           <Layout>
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/flows" element={<FlowLibrary />} />
-              <Route path="/flows/:id" element={<WorkflowRunner />} />
+              {/* Redirect /flows to /search for consistency */}
+              <Route path="/flows" element={<Navigate to="/search" replace />} />
+              <Route path="/flows/:id" element={<Navigate to="/search/:id" replace />} />
+              <Route path="/search" element={<Search />} />
+              <Route path="/search/:id" element={<WorkflowRunner />} />
               {/* Legacy route for keyword-kombat → redirect to loop-over-rows with mode */}
               <Route
                 path="/flows/keyword-kombat"
-                element={<Navigate to="/flows/loop-over-rows?mode=keyword-kombat" replace />}
+                element={<Navigate to="/search/loop-over-rows?mode=keyword-kombat" replace />}
               />
               <Route path="/workflows/:id" element={<WorkflowRedirect />} />
               <Route path="/dashboard" element={<Dashboard />} />
-                            <Route path="/executions" element={<ExecutionDashboard />} />
-            <Route path="/developer" element={<Developer />} />
-            <Route path="/search" element={<Search />} />
+              <Route path="/executions" element={<ExecutionDashboard />} />
+              <Route path="/developer" element={<Developer />} />
               <Route path="/docs" element={<Documentation />} />
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/about" element={<About />} />

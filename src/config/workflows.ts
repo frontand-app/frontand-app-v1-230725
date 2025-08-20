@@ -159,7 +159,7 @@ Mike Chen,mike@startupxyz.com,StartupXYZ,startupxyz.com`
     description: 'Extract and download company logos from websites automatically',
     icon: Image,
     color: 'purple',
-    status: 'coming-soon',
+    status: 'active', // Deployed to techrocketlist workspace with FastAPI app
     category: 'Data Enrichment',
     
     inputs: [
@@ -208,7 +208,7 @@ Mike Chen,mike@startupxyz.com,StartupXYZ,startupxyz.com`
       }
     ],
     
-    endpoint: 'https://scaile--crawl4logo-fastapi-app.modal.run/process',
+    endpoint: 'https://frontand-app--tech-crawl4logo-fastapi-app.modal.run/process',
     supportsGoogleSearch: false,
     supportsTestMode: true,
     
@@ -227,7 +227,7 @@ Mike Chen,mike@startupxyz.com,StartupXYZ,startupxyz.com`
     description: 'Extract contact information and team members from company websites',
     icon: Users,
     color: 'green',
-    status: 'coming-soon',
+    status: 'active', // Deployed to techrocketlist workspace with FastAPI wrapper
     category: 'Sales & Marketing',
     
     inputs: [
@@ -266,7 +266,7 @@ Mike Chen,mike@startupxyz.com,StartupXYZ,startupxyz.com`
       }
     ],
     
-    endpoint: 'https://scaile--crawl4contacts-fastapi-app.modal.run/process',
+    endpoint: 'https://frontand-app--tech-crawl4contacts-frontand-wrapper-fastapi-app.modal.run/process',
     supportsGoogleSearch: true,
     supportsTestMode: true,
     
@@ -550,6 +550,77 @@ Mike Chen,mike@startupxyz.com,StartupXYZ,startupxyz.com`
     },
     
     outputType: 'image',
+    downloadable: true
+  },
+
+  'crawl4gmaps': {
+    id: 'crawl4gmaps',
+    title: 'Crawl4GMaps',
+    description: 'Extract business information from Google Maps searches by location and search terms',
+    icon: Search,
+    color: 'emerald',
+    status: 'active', // Deployed to techrocketlist workspace with FastAPI wrapper
+    category: 'Data Enrichment',
+    
+    inputs: [
+      {
+        id: 'locations',
+        label: 'Locations',
+        type: 'textarea',
+        placeholder: 'New York, NY\nLos Angeles, CA\nChicago, IL',
+        required: true,
+        helpText: 'Enter locations to search, one per line'
+      },
+      {
+        id: 'search_terms',
+        label: 'Search Terms',
+        type: 'textarea',
+        placeholder: 'restaurants\ncoffee shops\ngyms',
+        required: true,
+        helpText: 'Enter what businesses to search for, one per line'
+      },
+      {
+        id: 'max_results',
+        label: 'Max Results per Search',
+        type: 'number',
+        placeholder: '10',
+        helpText: 'Maximum number of results to return per location/search term combination'
+      }
+    ],
+    
+    templates: [
+      {
+        id: 'restaurant-research',
+        title: 'Restaurant Research',
+        description: 'Find restaurants in major cities',
+        sampleData: {
+          locations: 'New York, NY\nLos Angeles, CA',
+          search_terms: 'restaurants\nitalian restaurants',
+          max_results: 10
+        }
+      },
+      {
+        id: 'competitor-analysis',
+        title: 'Competitor Analysis',
+        description: 'Find competitors in specific markets',
+        sampleData: {
+          locations: 'San Francisco, CA\nSeattle, WA',
+          search_terms: 'coworking spaces\ntech startups',
+          max_results: 15
+        }
+      }
+    ],
+    
+    endpoint: 'https://frontand-app--tech-gmaps-frontand-wrapper-fastapi-app.modal.run/process',
+    supportsGoogleSearch: false,
+    supportsTestMode: true,
+    
+    estimatedTime: {
+      base: 30,
+      perItem: 20
+    },
+    
+    outputType: 'table',
     downloadable: true
   },
 

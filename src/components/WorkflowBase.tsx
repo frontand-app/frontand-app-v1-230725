@@ -21,7 +21,7 @@ import GoogleSearchToggle from '@/components/shared/GoogleSearchToggle';
 import ColumnSelectorChips from '@/components/shared/ColumnSelectorChips';
 import { useAuth } from '@/hooks/useAuth';
 import { createExecution, updateExecution, buildFilesForResults } from '@/lib/executionApi';
-import { buildLoopOverRowsPayload } from '@/lib/modes';
+import { buildLoopOverRowsPayload, buildCrawlPayload, CrawlTask } from '@/lib/modes';
 import * as LucideIcons from 'lucide-react';
 import { TableOutput, TableData } from '@/components/TableOutput';
 import { normalizeResult } from '@/lib/normalizers';
@@ -551,7 +551,7 @@ OUTPUT (JSON only; array with single element):
       // Use shared mode adapter for loop-over-rows
       if (config.id === 'loop-over-rows') {
         if (mode === 'freestyle' || mode === 'vc-analyst') {
-          const parsedData = parseCSVData(inputValues.csv_data);
+        const parsedData = parseCSVData(inputValues.csv_data);
           if (!parsedData) throw new Error('Invalid CSV data format');
           requestData = buildLoopOverRowsPayload(mode as any, inputValues, {
             testMode,
@@ -568,42 +568,25 @@ OUTPUT (JSON only; array with single element):
             webhookUrl: inputValues.webhook_url,
           });
         }
-      } else if (config.id === 'crawl4imprint' && inputValues.websites) {
-        // Special handling for crawl4imprint workflow
-        let websitesList: string[] = [];
+      } else if (['crawl4imprint', 'crawl4contacts', 'crawl4logo', 'crawl4gmaps'].includes(config.id)) {
+        // Use shared crawl adapter for all crawling workflows
+        const taskMap: Record<string, CrawlTask> = {
+          'crawl4imprint': 'imprint',
+          'crawl4contacts': 'contacts',
+          'crawl4logo': 'logo',
+          'crawl4gmaps': 'gmaps'
+        };
         
-        // Handle CSV data or plain text
-        const websitesInput = inputValues.websites.trim();
-        if (websitesInput.includes(',') && websitesInput.includes('\n')) {
-          // Looks like CSV data - parse it
-          const lines = websitesInput.split('\n');
-          const hasHeaders = lines[0].toLowerCase().includes('website') || lines[0].toLowerCase().includes('url');
-          const dataLines = hasHeaders ? lines.slice(1) : lines;
-          
-          websitesList = dataLines
-            .map(line => {
-              // Handle CSV format - take first column or the whole line if no commas
-              const columns = line.split(',').map(col => col.trim().replace(/"/g, ''));
-              return columns[0];
-            })
-            .filter(url => url.length > 0 && url.startsWith('http'));
-        } else {
-          // Plain text format - one URL per line
-          websitesList = websitesInput
-            .split('\n')
-            .map((url: string) => url.trim())
-            .filter((url: string) => url.length > 0);
-        }
-        
-        if (websitesList.length === 0) {
-          throw new Error('Please provide at least one valid website URL');
+        const task = taskMap[config.id];
+        if (!task) {
+          throw new Error(`Unknown crawl task for workflow: ${config.id}`);
         }
 
-        requestData = {
-          websites: websitesList,
-          test_mode: testMode,
-          enable_google_search: enableGoogleSearch
-        };
+        requestData = buildCrawlPayload(task, inputValues, {
+          testMode,
+          enableGoogleSearch,
+          webhookUrl: inputValues.webhook_url,
+        });
       } else {
         // Standard workflow - just pass through input values
         requestData = {
@@ -758,8 +741,8 @@ OUTPUT (JSON only; array with single element):
       case 'csv':
         return (
           <CsvPlaintextInput
-            id={field.id}
-            value={value}
+              id={field.id}
+              value={value}
             placeholder={field.placeholder}
             uploadedFileName={uploadedFile?.name || null}
             onChange={(text) => {
@@ -768,9 +751,9 @@ OUTPUT (JSON only; array with single element):
             }}
             onFilePicked={(file) => processFile(file, field.id)}
             onClearFile={() => {
-              setUploadedFile(null);
-              handleInputChange(field.id, '');
-            }}
+                      setUploadedFile(null);
+                      handleInputChange(field.id, '');
+                    }}
           />
         );
         
@@ -983,13 +966,13 @@ OUTPUT (JSON only; array with single element):
           <div className="mb-6">
             <div className="inline-flex items-center gap-2 bg-secondary rounded-full px-3 py-1 text-sm">
               {config.category}
-            </div>
           </div>
+        </div>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
                 <h1 className="text-3xl font-bold">{config.title}</h1>
-            </div>
+                  </div>
           </div>
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
@@ -1027,7 +1010,7 @@ OUTPUT (JSON only; array with single element):
                   />
                   <span className="text-sm font-medium text-foreground">Mock mode</span>
                   <Popover>
-                    <PopoverTrigger asChild>
+                      <PopoverTrigger asChild>
                       <button
                         type="button"
                         className="text-muted-foreground hover:text-foreground transition-colors"
@@ -1035,7 +1018,7 @@ OUTPUT (JSON only; array with single element):
                       >
                         <Info className="h-4 w-4" />
                       </button>
-                    </PopoverTrigger>
+                      </PopoverTrigger>
                     <PopoverContent side="bottom" align="start" className="max-w-sm text-sm">
                       <div className="space-y-2">
                         <div className="font-medium">What is Mock mode?</div>
@@ -1045,9 +1028,9 @@ OUTPUT (JSON only; array with single element):
                           <li>No webhooks or emails are sent.</li>
                           <li>Switch off to run the full workload.</li>
                         </ul>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
+                                  </div>
+                      </PopoverContent>
+                    </Popover>
                 </div>
               )}
             </div>
@@ -1081,9 +1064,9 @@ OUTPUT (JSON only; array with single element):
                 )}
                 <div className={`${inputBadgeClass} rounded-lg px-3 py-1 text-sm font-medium inline-flex w-fit mb-6`}>
                   YOUR INPUT
-                </div>
+                  </div>
 
-
+                  
                 <div className="space-y-6">
                         <div>
                     <h3 className="font-medium text-foreground mb-4">
@@ -1110,7 +1093,7 @@ OUTPUT (JSON only; array with single element):
                           }}
                             forceSingleHeader="keyword"
                         />
-                      </div>
+                        </div>
                     ) : (
                       <div className="space-y-4">
                         <CsvPlaintextInput
@@ -1144,7 +1127,7 @@ OUTPUT (JSON only; array with single element):
                             onChange={(e) => handleInputChange('prompt', e.target.value)}
                             className="min-h-[140px] resize-none"
                           />
-                        </div>
+                      </div>
 
                         <div>
                           <label className="text-sm font-medium text-foreground mb-2 block">Output schema (JSON instruction)</label>
@@ -1155,15 +1138,15 @@ OUTPUT (JSON only; array with single element):
                             className="min-h-[140px] resize-none"
                           />
                         </div>
-                      </div>
-                    )}
+                    </div>
+                  )}
                 </div>
 
                    {/* Additional inputs for specific modes */}
                         <div className="mt-6 pt-4 border-t border-border">
                     <div className="space-y-4">
                       {config.id === 'loop-over-rows' && mode === 'keyword-kombat' && uploadedFile && (
-                      <div>
+                        <div>
                         <label className="text-sm text-foreground mb-2 block">Map keyword variable</label>
                         <Select value={inputValues.keyword_variable || ''} onValueChange={(value) => handleInputChange('keyword_variable', value)}>
                           <SelectTrigger>
@@ -1194,11 +1177,11 @@ OUTPUT (JSON only; array with single element):
                           <div>
                             <label className="text-sm text-foreground mb-1 block">Fund name</label>
                             <Input value={vcFundName} onChange={(e) => setVcFundName(e.target.value)} />
-                          </div>
+                        </div>
                           <div>
                             <label className="text-sm text-foreground mb-1 block">Stage allowlist</label>
                             <Input value={vcStages} onChange={(e) => setVcStages(e.target.value)} placeholder="Pre-seed, Seed, Series A" />
-                          </div>
+                      </div>
                           <div>
                             <label className="text-sm text-foreground mb-1 block">Launch vintage ≤ (months)</label>
                             <Input value={vcVintageMonths} onChange={(e) => setVcVintageMonths(e.target.value)} />
@@ -1239,14 +1222,14 @@ OUTPUT (JSON only; array with single element):
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <div className="flex-1">
-                            <Button
-                              onClick={handleExecute}
+                <Button
+                  onClick={handleExecute}
                               disabled={isExecuting || authRequired}
                               className="w-full py-6 text-sm font-medium rounded-full bg-foreground hover:bg-foreground/90 text-background disabled:opacity-60"
                             >
                               RUN WORKFLOW
                               <div className="ml-2">→</div>
-                            </Button>
+                </Button>
                           </div>
                         </TooltipTrigger>
                         {authRequired && (
@@ -1305,13 +1288,13 @@ OUTPUT (JSON only; array with single element):
                           {Math.max(0, Math.round(loadingProgress))}%
                         </span>
                         <span>
-                          {(() => {
+                      {(() => {
                             const est = getEstimatedTime();
                             const avg = Math.round((est.min + est.max) / 2);
                             return avg <= 60
                               ? `Hold on ~${avg}s`
                               : `This may take ~${Math.round(avg / 60)} min. We'll email you when it's done.`;
-                          })()}
+                      })()}
                         </span>
                       </div>
                     </div>

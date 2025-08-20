@@ -79,3 +79,106 @@ export const buildLoopOverRowsPayload = (
   };
 };
 
+// Crawl workflow types and adapters
+export type CrawlTask = 'gmaps' | 'contacts' | 'imprint' | 'logo';
+
+export interface CrawlOptions {
+  testMode?: boolean;
+  enableGoogleSearch?: boolean;
+  webhookUrl?: string;
+}
+
+export const buildCrawlPayload = (
+  task: CrawlTask,
+  inputs: Record<string, any>,
+  opts: CrawlOptions = {}
+) => {
+  const { testMode = false, enableGoogleSearch = false, webhookUrl } = opts;
+
+  // Base payload WITHOUT task parameter (individual backends don't support it yet)
+  const basePayload = {
+    test_mode: testMode,
+    enable_google_search: enableGoogleSearch,
+    ...(webhookUrl ? { config: { webhook_url: webhookUrl } } : {}),
+  };
+
+  switch (task) {
+    case 'imprint': {
+      const websites = parseTextInput(inputs.websites);
+      if (!websites || websites.length === 0) {
+        throw new Error('Website URLs are required for imprint extraction');
+      }
+      return {
+        ...basePayload,
+        websites: testMode ? websites.slice(0, 3) : websites,
+      };
+    }
+
+    case 'contacts': {
+      const companies = parseTextInput(inputs.companies);
+      const contactTypes = Array.isArray(inputs.contact_types) 
+        ? inputs.contact_types 
+        : [];
+      
+      if (!companies || companies.length === 0) {
+        throw new Error('Company names/URLs are required for contact extraction');
+      }
+      if (contactTypes.length === 0) {
+        throw new Error('At least one contact type must be selected');
+      }
+      
+      return {
+        ...basePayload,
+        companies: testMode ? companies.slice(0, 3) : companies,
+        contact_types: contactTypes,
+      };
+    }
+
+    case 'logo': {
+      const urls = parseTextInput(inputs.urls);
+      if (!urls || urls.length === 0) {
+        throw new Error('Website URLs are required for logo extraction');
+      }
+      return {
+        ...basePayload,
+        urls: testMode ? urls.slice(0, 3) : urls,
+        format: inputs.format || 'png',
+        size: inputs.size || 'original',
+      };
+    }
+
+    case 'gmaps': {
+      const locations = parseTextInput(inputs.locations);
+      const searchTerms = parseTextInput(inputs.search_terms);
+      
+      if (!locations || locations.length === 0) {
+        throw new Error('Locations are required for Google Maps search');
+      }
+      if (!searchTerms || searchTerms.length === 0) {
+        throw new Error('Search terms are required for Google Maps search');
+      }
+      
+      return {
+        ...basePayload,
+        locations: testMode ? locations.slice(0, 2) : locations,
+        search_terms: testMode ? searchTerms.slice(0, 2) : searchTerms,
+        max_results: inputs.max_results || 10,
+      };
+    }
+
+    default:
+      throw new Error(`Unsupported crawl task: ${task}`);
+  }
+};
+
+// Helper function to parse text input (textarea/csv format)
+const parseTextInput = (input: any): string[] => {
+  if (!input) return [];
+  
+  const text = Array.isArray(input) ? input.join('\n') : String(input);
+  return text
+    .split('\n')
+    .map((line: string) => line.trim())
+    .filter((line: string) => line.length > 0);
+};
+

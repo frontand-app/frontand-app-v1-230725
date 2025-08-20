@@ -31,14 +31,14 @@ const Documentation = () => {
       title: "Browse Workflows",
       description: "Explore our library of pre-built AI workflows created by the community",
       action: "View Flow Library",
-      link: "/flows"
+      link: "/search"
     },
     {
       step: 3,
       title: "Run Your First Workflow",
       description: "Try the Keyword Clustering workflow to see how easy automation can be",
       action: "Try Keyword Clustering",
-      link: "/flows/cluster-keywords"
+      link: "/search/cluster-keywords"
     },
     {
       step: 4,
@@ -202,7 +202,7 @@ const Documentation = () => {
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-primary-600 font-medium">{workflow.cost}</span>
                         <Button size="sm" asChild>
-                          <Link to="/flows">
+                          <Link to="/search">
                             Try Now
                           </Link>
                         </Button>
@@ -345,7 +345,7 @@ curl -X POST https://api.fronta.dev/v1/workflows/run \\
                     </a>
                   </Button>
                   <Button variant="outline" asChild>
-                    <Link to="/flows">
+                    <Link to="/search">
                       Try Workflows First
                     </Link>
                   </Button>

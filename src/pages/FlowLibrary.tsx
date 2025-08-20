@@ -234,7 +234,7 @@ const FlowLibrary = () => {
 
                 {/* Action */}
                 <Button size="sm" asChild className="w-full">
-                  <Link to={`/flows/${flow.id}`}>
+                  <Link to={`/search/${flow.id}`}>
                     Run Flow
                   </Link>
                 </Button>

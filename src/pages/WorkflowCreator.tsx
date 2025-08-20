@@ -452,7 +452,7 @@ const WorkflowCreator = () => {
     if (!validateWorkflow()) return;
 
     const workflowId = generateWorkflowId(workflow.name);
-    navigate(`/flows/${workflowId}`, { 
+            navigate(`/search/${workflowId}`, { 
       state: { 
         testMode: true, 
         workflowDefinition: workflow 
